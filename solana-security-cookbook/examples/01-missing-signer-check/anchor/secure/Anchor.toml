@@ -1,7 +1,3 @@
-[workspace]
-members = ["programs/*"]
-
-[toolchain]
 
 [features]
 seeds = false
