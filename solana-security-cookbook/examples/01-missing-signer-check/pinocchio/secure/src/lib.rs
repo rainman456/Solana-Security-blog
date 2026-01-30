@@ -4,7 +4,7 @@ use pinocchio::{
     entrypoint,
     error::ProgramError,
     ProgramResult,
-    cpi::Signer,
+    cpi::{Seed, Signer},
 };
 use pinocchio_system::instructions::Transfer;
 
@@ -102,8 +102,12 @@ fn process_withdraw(
         return Err(ProgramError::InvalidSeeds);
     }
 
-    let signer_seeds = &[b"vault", user.address().as_ref(), &[bump]];
-    let pda_signer = Signer::from(&signer_seeds[..]);
+    let seeds = [
+        Seed::from(b"vault"),
+        Seed::from(user.address().as_ref()),
+        Seed::from(&[bump]),
+    ];
+    let pda_signer = Signer::from(&seeds);
 
     Transfer {
         from: vault,
