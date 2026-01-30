@@ -7,6 +7,7 @@ use pinocchio::{
     cpi::{Seed, Signer},
 };
 use pinocchio_system::instructions::Transfer;
+use solana_program::pubkey::Pubkey;
 
 entrypoint!(process_instruction);
 
@@ -40,9 +41,11 @@ fn process_initialize(
     }
 
     let seeds = &[b"vault", user.address().as_ref()];
-    let (pda, _bump) = Address::find_program_address(seeds, program_id);
+    // Convert Pinocchio Address to Solana Pubkey for derivation
+    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let (pda, _bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
 
-    if pda != *vault.address() {
+    if pda.to_bytes() != *vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
     
@@ -63,8 +66,10 @@ fn process_deposit(
     }
 
     let seeds = &[b"vault", user.address().as_ref()];
-    let (pda, _bump) = Address::find_program_address(seeds, program_id);
-    if pda != *vault.address() {
+    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let (pda, _bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
+    
+    if pda.to_bytes() != *vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
@@ -96,14 +101,15 @@ fn process_withdraw(
     }
 
     let seeds = &[b"vault", user.address().as_ref()];
-    let (pda, bump) = Address::find_program_address(seeds, program_id);
+    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let (pda, bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
 
-    if pda != *vault.address() {
+    if pda.to_bytes() != *vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
     let seeds = [
-        Seed::from(b"vault"),
+        Seed::from(b"vault" as &[u8]),
         Seed::from(user.address().as_ref()),
         Seed::from(&[bump]),
     ];

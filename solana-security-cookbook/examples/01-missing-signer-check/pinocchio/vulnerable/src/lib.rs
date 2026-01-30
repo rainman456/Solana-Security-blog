@@ -7,6 +7,7 @@ use pinocchio::{
     cpi::Signer,
 };
 use pinocchio_system::instructions::Transfer;
+use solana_program::pubkey::Pubkey;
 
 entrypoint!(process_instruction);
 
@@ -37,9 +38,10 @@ fn process_initialize(
 
     // Derive PDA to verify vault address
     let seeds = &[b"vault", user.address().as_ref()];
-    let (pda, _bump) = Address::find_program_address(seeds, program_id);
+    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let (pda, _bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
 
-    if pda != *vault.address() {
+    if pda.to_bytes() != *vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
     
@@ -64,8 +66,9 @@ fn process_deposit(
     }
 
     let seeds = &[b"vault", user.address().as_ref()];
-    let (pda, _bump) = Address::find_program_address(seeds, program_id);
-    if pda != *vault.address() {
+    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let (pda, _bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
+    if pda.to_bytes() != *vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
@@ -95,14 +98,19 @@ fn process_withdraw(
     
     // Verify vault is derived from user
     let seeds = &[b"vault", user.address().as_ref()];
-    let (pda, bump) = Address::find_program_address(seeds, program_id);
+    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let (pda, bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
 
-    if pda != *vault.address() {
+    if pda.to_bytes() != *vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
     // Sign with PDA
-    let signer_seeds = &[b"vault", user.address().as_ref(), &[bump]];
+    let signer_seeds = &[
+        pinocchio::cpi::Seed::from(b"vault" as &[u8]),
+        pinocchio::cpi::Seed::from(user.address().as_ref()),
+        pinocchio::cpi::Seed::from(&[bump]),
+    ];
     let pda_signer = Signer::from(&signer_seeds[..]);
 
     // Transfer from vault to user
