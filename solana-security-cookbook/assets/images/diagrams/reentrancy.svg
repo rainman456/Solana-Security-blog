@@ -1,0 +1,49 @@
+<!-- Reentrancy Diagram -->
+<svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="400" fill="#f8fafc" rx="12"/>
+  
+  <g transform="translate(50, 50)">
+    <text x="150" y="30" font-family="monospace" font-weight="bold" fill="#ef4444">❌ Vulnerable (Actions BEFORE Update)</text>
+    
+    <!-- Timeline -->
+    <line x1="100" y1="60" x2="600" y2="60" stroke="#94a3b8" stroke-width="2"/>
+    
+    <!-- Step 1 -->
+    <circle cx="150" cy="60" r="10" fill="#fff" stroke="#ef4444" stroke-width="2"/>
+    <text x="150" y="90" text-anchor="middle" font-family="sans-serif" font-size="12">1. Check Balance</text>
+    
+    <!-- Step 2 -->
+    <circle cx="300" cy="60" r="10" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+    <text x="300" y="90" text-anchor="middle" font-family="sans-serif" font-size="12">2. Transfer (CPI)</text>
+    
+    <!-- Loop -->
+    <path d="M300 50 Q 225 0 150 50" fill="none" stroke="#ef4444" stroke-dasharray="4"/>
+    <text x="225" y="30" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#ef4444">Re-enter here!</text>
+    
+    <!-- Step 3 -->
+    <circle cx="450" cy="60" r="10" fill="#fff" stroke="#94a3b8" stroke-width="2"/>
+    <text x="450" y="90" text-anchor="middle" font-family="sans-serif" font-size="12">3. Update Balance</text>
+  </g>
+
+  <g transform="translate(50, 250)">
+    <text x="150" y="30" font-family="monospace" font-weight="bold" fill="#22c55e">✅ Secure (Checks-Effects-Interactions)</text>
+    
+    <line x1="100" y1="60" x2="600" y2="60" stroke="#94a3b8" stroke-width="2"/>
+    
+    <!-- Step 1 -->
+    <circle cx="150" cy="60" r="10" fill="#fff" stroke="#22c55e" stroke-width="2"/>
+    <text x="150" y="90" text-anchor="middle" font-family="sans-serif" font-size="12">1. Check Balance</text>
+    
+    <!-- Step 2 -->
+    <circle cx="300" cy="60" r="10" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+    <text x="300" y="90" text-anchor="middle" font-family="sans-serif" font-size="12">2. Update Balance</text>
+    
+    <!-- Step 3 -->
+    <circle cx="450" cy="60" r="10" fill="#fff" stroke="#22c55e" stroke-width="2"/>
+    <text x="450" y="90" text-anchor="middle" font-family="sans-serif" font-size="12">3. Transfer (CPI)</text>
+    
+    <!-- Blocked Loop -->
+    <path d="M450 50 Q 375 0 300 50" fill="none" stroke="#94a3b8" stroke-dasharray="4"/>
+    <text x="375" y="30" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#94a3b8">Attempts fail (0 balance)</text>
+  </g>
+</svg>

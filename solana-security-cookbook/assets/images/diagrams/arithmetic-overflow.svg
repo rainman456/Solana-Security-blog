@@ -1,0 +1,46 @@
+<!-- Arithmetic Overflow Diagram -->
+<svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="400" fill="#f8fafc" rx="12"/>
+  
+  <g transform="translate(50, 50)">
+    <text x="150" y="30" font-family="monospace" font-weight="bold" fill="#ef4444">❌ Vulnerable Logic (Overflow)</text>
+    
+    <!-- Concept: Odometer wrapping around -->
+    <circle cx="100" cy="90" r="40" fill="#fff" stroke="#ef4444" stroke-width="3"/>
+    <text x="100" y="95" text-anchor="middle" font-family="monospace" font-size="20">255</text>
+    
+    <text x="160" y="95" font-family="monospace" font-size="20" fill="#64748b">+ 1</text>
+    
+    <path d="M220 90 L260 90" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-vuln)"/>
+    
+    <circle cx="320" cy="90" r="40" fill="#fee2e2" stroke="#ef4444" stroke-width="3"/>
+    <text x="320" y="95" text-anchor="middle" font-family="monospace" font-size="20" fill="#ef4444">0</text>
+    
+    <text x="400" y="95" font-family="sans-serif" font-size="14" fill="#ef4444">Wrapped Unexpectedly!</text>
+  </g>
+
+  <g transform="translate(50, 250)">
+    <text x="150" y="30" font-family="monospace" font-weight="bold" fill="#22c55e">✅ Secure Logic (Checked Math)</text>
+    
+    <circle cx="100" cy="90" r="40" fill="#fff" stroke="#22c55e" stroke-width="3"/>
+    <text x="100" y="95" text-anchor="middle" font-family="monospace" font-size="20">255</text>
+    
+    <text x="160" y="95" font-family="monospace" font-size="20" fill="#64748b">+ 1</text>
+    
+    <path d="M220 90 L260 90" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-secure)"/>
+    
+    <rect x="280" y="60" width="80" height="60" rx="6" fill="#dcfce7" stroke="#22c55e" stroke-width="3"/>
+    <text x="320" y="95" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#22c55e">Error</text>
+    
+    <text x="400" y="95" font-family="sans-serif" font-size="14" fill="#22c55e">Transaction Stops Safely</text>
+  </g>
+  
+  <defs>
+    <marker id="arrow-vuln" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#94a3b8" />
+    </marker>
+    <marker id="arrow-secure" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+</svg>

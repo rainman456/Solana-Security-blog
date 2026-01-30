@@ -1,0 +1,64 @@
+<!-- Missing Signer Check Diagram -->
+<svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="400" fill="#f8fafc" rx="12"/>
+  
+  <!-- Vulnerable Flow -->
+  <g transform="translate(50, 50)">
+    <text x="150" y="30" font-family="monospace" font-weight="bold" fill="#ef4444">❌ Vulnerable Logic</text>
+    
+    <!-- Step 1: Attacker -->
+    <rect x="0" y="60" width="120" height="60" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+    <text x="60" y="95" text-anchor="middle" font-family="sans-serif" font-size="14">Attacker</text>
+    
+    <!-- Arrow bypassing check -->
+    <path d="M120 90 L280 90" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow-vuln)"/>
+    
+    <!-- Step 2: Program -->
+    <rect x="280" y="60" width="160" height="60" rx="6" fill="#fff" stroke="#94a3b8" stroke-width="2"/>
+    <text x="360" y="85" text-anchor="middle" font-family="sans-serif" font-size="12">Instruction</text>
+    <text x="360" y="105" text-anchor="middle" font-family="monospace" font-size="11" fill="#64748b">No .is_signer()?</text>
+    
+    <!-- Step 3: Vault -->
+    <rect x="540" y="60" width="120" height="60" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+    <text x="600" y="95" text-anchor="middle" font-family="sans-serif" font-size="14">Vault Drained</text>
+    
+    <path d="M440 90 L540 90" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow-vuln)"/>
+  </g>
+
+  <!-- Secure Flow -->
+  <g transform="translate(50, 250)">
+    <text x="150" y="30" font-family="monospace" font-weight="bold" fill="#22c55e">✅ Secure Logic</text>
+    
+    <!-- Step 1: User -->
+    <rect x="0" y="60" width="120" height="60" rx="6" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+    <text x="60" y="95" text-anchor="middle" font-family="sans-serif" font-size="14">User</text>
+    
+    <!-- Arrow -->
+    <path d="M120 90 L220 90" stroke="#22c55e" stroke-width="2" marker-end="url(#arrow-secure)"/>
+    
+    <!-- Gatekeeper Check -->
+    <path d="M220 90 L240 60 L280 60 L280 120 L240 120 Z" fill="#22c55e"/>
+    <text x="250" y="95" fill="white" font-weight="bold" font-family="sans-serif">?</text>
+    
+    <!-- Step 2: Program -->
+    <rect x="280" y="60" width="160" height="60" rx="6" fill="#fff" stroke="#22c55e" stroke-width="2"/>
+    <text x="360" y="85" text-anchor="middle" font-family="sans-serif" font-size="12">Instruction</text>
+    <text x="360" y="105" text-anchor="middle" font-family="monospace" font-size="11" fill="#22c55e">Signer Checked!</text>
+    
+    <!-- Step 3: Vault -->
+    <rect x="540" y="60" width="120" height="60" rx="6" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+    <text x="600" y="95" text-anchor="middle" font-family="sans-serif" font-size="14">Funds Safe</text>
+    
+    <path d="M440 90 L540 90" stroke="#22c55e" stroke-width="2" marker-end="url(#arrow-secure)"/>
+  </g>
+  
+  <defs>
+    <marker id="arrow-vuln" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#ef4444" />
+    </marker>
+    <marker id="arrow-secure" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#22c55e" />
+    </marker>
+  </defs>
+</svg>

@@ -1,394 +1,87 @@
 ---
 layout: post
-title: "Reentrancy in Solana: Not Your Ethereum Problem (But Still a Problem)"
+title: "Cross-Program Reentrancy"
 date: 2025-01-27
-categories: vulnerabilities
+category: "External Interactions"
+difficulty: "Advanced"
+checklist: 
+  - "Do you update state BEFORE calling another program (CPI)?"
+  - "Are you following the 'Checks-Effects-Interactions' pattern?"
+  - "Be careful with 'invoke_signed' if you haven't updated balances yet."
 ---
 
-# Reentrancy in Solana: Not Your Ethereum Problem (But Still a Problem)
+## 📖 The Scenario
+You are a cashier. A customer hands you a check for $100.
+1. You hand them $100 cash.
+2. You turn around to write "$100 withdrawn" in your ledger.
 
-If you're coming from Ethereum, you know about reentrancy. The DAO hack. `checks-effects-interactions`. All that.
+Between step 1 and 2, while your back is turned, the customer quickly hands you **the same check again**. Since you haven't written in the ledger yet, you think "Oh, they haven't withdrawn anything!" and hand them another $100. They drain your register before you write a single line.
 
-Solana's different. No external calls in the middle of execution, right? Wrong.
+## 💡 The "Aha!" Moment
+Solana programs can call other programs (**CPI** - Cross-Program Invocation).
+Crucially, when you call another program, you **pause** your execution and hand control to them.
 
-Solana has **CPI** (Cross-Program Invocation), and if you're not careful, you can still get rekt.
+If that other program (the "customer") is malicious, it can call **back** into your program (`withdraw`) *before* you finished updating your balances. It sees the old balance and withdraws again.
 
-## What's Reentrancy?
+<div class="diagram-container">
+  <img src="/solana-security-cookbook/assets/images/diagrams/reentrancy.svg" alt="Reentrancy Vulnerability Diagram">
+</div>
 
-Simple version: Your program calls another program, and that program calls back into yours before the first call finishes.
+## ⚔️ The Exploit
+### Vulnerable vs Secure
 
-Ethereum example:
-```solidity
-// ❌ VULNERABLE
-function withdraw() public {
-    uint amount = balances[msg.sender];
-    msg.sender.call{value: amount}("");  // External call
-    balances[msg.sender] = 0;  // Too late!
-}
-```
+{% capture vulnerable_desc %}
+**Interactions BEFORE Effects**: The program gives the money *before* updating its own records.
+{% endcapture %}
 
-Attacker's contract receives the ETH, calls `withdraw()` again, gets paid twice.
-
-## Solana's Different... Sort Of
-
-In Solana, you can't directly call back into a program during execution. But you CAN:
-
-1. Call another program via CPI
-2. That program modifies your accounts
-3. Your program continues with stale state
-
-It's not traditional reentrancy, but the effect is similar: **state changes happen in unexpected order**.
-
-## The Real Vulnerability: State After CPI
-
-Here's the actual bug pattern in Solana:
-
-```rust
-// ❌ VULNERABLE
+{% capture vulnerable_code %}
 pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    let vault = &mut ctx.accounts.vault;
-    let user = &ctx.accounts.user;
-    
-    // CPI to transfer tokens
-    token::transfer(
-        CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: vault.to_account_info(),
-                to: user.to_account_info(),
-                authority: vault.to_account_info(),
-            },
-        ),
-        amount,
-    )?;
-    
-    // ❌ Update state AFTER CPI
-    vault.balance -= amount;
-    
-    Ok(())
-}
-```
+    // 1. Check Balance
+    if ctx.accounts.vault.balance < amount { ... }
 
-**The attack:**
-1. Call `withdraw(100)`
-2. CPI transfers 100 tokens
-3. Before state updates, call `withdraw(100)` again
-4. Vault still shows full balance
-5. Get 100 tokens again
-6. Repeat until drained
+    // 2. Transfer (CPI) - DANGER ZONE 🚨
+    // Control hands over to 'to' account here!
+    anchor_lang::solana_program::program::invoke(...)
 
-Wait, how do you call it again before it finishes? You can't... directly.
-
-## The Actual Attack Vector
-
-The real danger is when your program can be called multiple times in the same transaction:
-
-```rust
-// User creates a transaction with multiple instructions:
-// 1. withdraw(100)
-// 2. withdraw(100)
-// 3. withdraw(100)
-
-// Each instruction sees the same initial state
-// because state updates happen at the end
-```
-
-Or through CPI chains:
-```
-Your Program → Malicious Program → Your Program (via CPI)
-```
-
-The malicious program calls back into yours before the first call completes.
-
-## Real Example: The Vault Drain
-
-```rust
-// ❌ VULNERABLE
-#[program]
-pub mod vulnerable_vault {
-    use super::*;
-    
-    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-        let vault = &mut ctx.accounts.vault;
-        
-        // Check balance
-        require!(vault.balance >= amount, ErrorCode::InsufficientFunds);
-        
-        // Transfer SOL via CPI
-        let cpi_context = CpiContext::new_with_signer(
-            ctx.accounts.system_program.to_account_info(),
-            system_program::Transfer {
-                from: vault.to_account_info(),
-                to: ctx.accounts.user.to_account_info(),
-            },
-            &[&[b"vault", &[vault.bump]]],
-        );
-        system_program::transfer(cpi_context, amount)?;
-        
-        // ❌ State update AFTER transfer
-        vault.balance -= amount;
-        
-        Ok(())
-    }
-}
-```
-
-**Attack:**
-```typescript
-// Create transaction with multiple withdraw instructions
-const tx = new Transaction();
-
-for (let i = 0; i < 10; i++) {
-  tx.add(
-    await program.methods
-      .withdraw(new BN(1_000_000))
-      .accounts({ /* ... */ })
-      .instruction()
-  );
-}
-
-// All 10 withdrawals see the same balance
-// Each one succeeds
-// Vault drained 10x
-```
-
-## The Fix: Update State First
-
-```rust
-// ✅ SECURE
-pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    let vault = &mut ctx.accounts.vault;
-    
-    // ✅ Update state FIRST
-    vault.balance = vault.balance
-        .checked_sub(amount)
-        .ok_or(ErrorCode::InsufficientFunds)?;
-    
-    // Then do CPI
-    let cpi_context = CpiContext::new_with_signer(
-        ctx.accounts.system_program.to_account_info(),
-        system_program::Transfer {
-            from: vault.to_account_info(),
-            to: ctx.accounts.user.to_account_info(),
-        },
-        &[&[b"vault", &[vault.bump]]],
-    );
-    system_program::transfer(cpi_context, amount)?;
-    
-    Ok(())
-}
-```
-
-Now if someone tries multiple withdrawals:
-1. First withdrawal: balance = 1000 - 100 = 900 ✅
-2. Second withdrawal: balance = 900 - 100 = 800 ✅
-3. Tenth withdrawal: balance = 200 - 100 = 100 ✅
-4. Eleventh withdrawal: 100 - 100 = 0 ✅
-5. Twelfth withdrawal: 0 - 100 = underflow ❌ FAIL
-
-## Checks-Effects-Interactions Pattern
-
-This is the same pattern from Ethereum, just adapted:
-
-1. **Checks** - Validate inputs, permissions, state
-2. **Effects** - Update your program's state
-3. **Interactions** - Call other programs via CPI
-
-```rust
-pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    // 1. CHECKS
-    require!(ctx.accounts.vault.owner == ctx.accounts.user.key(), ErrorCode::Unauthorized);
-    require!(ctx.accounts.vault.balance >= amount, ErrorCode::InsufficientFunds);
-    
-    // 2. EFFECTS
+    // 3. Update Balance (Too late!)
     ctx.accounts.vault.balance -= amount;
-    
-    // 3. INTERACTIONS
-    token::transfer(/* CPI call */)?;
-    
-    Ok(())
 }
-```
+{% endcapture %}
 
-## Pinocchio Example
+{% capture secure_desc %}
+**Checks-Effects-Interactions**: The program updates its records *before* handing over any money.
+{% endcapture %}
 
-```rust
-use pinocchio::{
-    AccountView,
-    error::ProgramError,
-    ProgramResult,
-};
-use pinocchio_system::instructions::Transfer;
+{% capture secure_code %}
+pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+    // 1. Check Balance
+    if ctx.accounts.vault.balance < amount { ... }
 
-pub fn withdraw(accounts: &[AccountView], amount: u64) -> ProgramResult {
-    let user = &accounts[0];
-    let vault = &accounts[1];
-    
-    // Read current balance
-    let balance_bytes = &vault.data()[0..8];
-    let balance = u64::from_le_bytes(balance_bytes.try_into().unwrap());
-    
-    // 1. CHECKS
-    if !user.is_signer() {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-    
-    // 2. EFFECTS - Update state FIRST
-    let new_balance = balance
-        .checked_sub(amount)
-        .ok_or(ProgramError::InsufficientFunds)?;
-    
-    vault.data()[0..8].copy_from_slice(&new_balance.to_le_bytes());
-    
-    // 3. INTERACTIONS - CPI last
-    Transfer {
-        from: vault,
-        to: user,
-        lamports: amount,
-    }
-    .invoke_signed(&[&[b"vault", &[bump]]])?;
-    
-    Ok(())
+    // 2. Update Balance - EFFECT ✅
+    // Re-entrant calls will see this new lower balance
+    ctx.accounts.vault.balance -= amount;
+
+    // 3. Transfer (CPI) - INTERACTION 🚀
+    anchor_lang::solana_program::program::invoke(...)
 }
-```
+{% endcapture %}
 
-## Common Mistakes
+{% include security-card.html 
+   vulnerable_desc=vulnerable_desc 
+   vulnerable_code=vulnerable_code 
+   secure_desc=secure_desc 
+   secure_code=secure_code 
+%}
 
-### Mistake 1: Checking State After CPI
+## 🧠 Mental Model: The Ledger First
+Always behave like a paranoid accountant.
+1. **Checks**: Verify the check is valid.
+2. **Effects**: Write down "Money Gone" in the ledger.
+3. **Interactions**: Finally, hand over the cash.
 
-```rust
-// ❌ WRONG
-token::transfer(cpi_ctx, amount)?;
+This order (CEI) guarantees that no matter what the customer does with the cash (or if they try to trick you), your books are already closed on that transaction.
 
-// Check if balance is still valid
-require!(vault.balance >= amount, ErrorCode::InsufficientFunds);
-vault.balance -= amount;
-```
-
-The check is useless. The transfer already happened.
-
-### Mistake 2: Multiple State Updates
-
-```rust
-// ❌ RISKY
-vault.balance -= amount;  // First update
-
-token::transfer(cpi_ctx, amount)?;
-
-vault.last_withdrawal = Clock::get()?.unix_timestamp;  // Second update
-```
-
-If the CPI fails, the first update already happened. Use a single atomic update or revert everything.
-
-### Mistake 3: Trusting Account State During CPI
-
-```rust
-// ❌ WRONG
-let initial_balance = vault.balance;
-
-some_cpi_call()?;  // This might modify vault!
-
-// Don't trust initial_balance anymore
-vault.balance = initial_balance - amount;
-```
-
-If the CPI can modify `vault`, your cached value is stale.
-
-## Testing Reentrancy
-
-```typescript
-describe("Reentrancy", () => {
-  it("Vulnerable: Allows multiple withdrawals", async () => {
-    // Deposit 10 SOL
-    await program.methods
-      .deposit(new BN(10_000_000_000))
-      .accounts({ /* ... */ })
-      .rpc();
-    
-    // Create transaction with 20 withdrawals of 1 SOL each
-    const tx = new Transaction();
-    for (let i = 0; i < 20; i++) {
-      tx.add(
-        await vulnerableProgram.methods
-          .withdraw(new BN(1_000_000_000))
-          .accounts({ /* ... */ })
-          .instruction()
-      );
-    }
-    
-    await provider.sendAndConfirm(tx);
-    
-    // ❌ Withdrew 20 SOL but only had 10
-    const vault = await program.account.vault.fetch(vaultPda);
-    console.log("Balance:", vault.balance.toString());
-    // Balance is negative or underflowed
-  });
-
-  it("Secure: Prevents multiple withdrawals", async () => {
-    await program.methods
-      .deposit(new BN(10_000_000_000))
-      .accounts({ /* ... */ })
-      .rpc();
-    
-    const tx = new Transaction();
-    for (let i = 0; i < 20; i++) {
-      tx.add(
-        await secureProgram.methods
-          .withdraw(new BN(1_000_000_000))
-          .accounts({ /* ... */ })
-          .instruction()
-      );
-    }
-    
-    try {
-      await provider.sendAndConfirm(tx);
-      throw new Error("Should have failed");
-    } catch (err) {
-      // ✅ Transaction failed after 10 withdrawals
-      console.log("Reentrancy prevented!");
-    }
-  });
-});
-```
-
-## When Is This Actually Dangerous?
-
-Reentrancy in Solana is dangerous when:
-
-1. **Multiple instructions in one transaction** - User can call your program multiple times
-2. **CPI chains** - Program A → Program B → Program A
-3. **Composability** - Other programs integrate with yours
-4. **Flash loans** - Borrow, exploit, repay in one transaction
-
-If your program is isolated and only called once per transaction, you're probably safe. But don't bet on it.
-
-## Security Checklist
-
-- [ ] All state updates happen before CPI calls
-- [ ] No state reads after CPI (they might be stale)
-- [ ] Balance checks use `checked_sub` (prevents underflow)
-- [ ] Tests include multiple instructions in one transaction
-- [ ] Consider: Can this program be called via CPI?
-
-## Anchor vs Pinocchio
-
-| Aspect | Anchor | Pinocchio |
-|--------|--------|-----------|
-| CPI Calls | `CpiContext::new` | Manual `invoke_signed` |
-| State Updates | Same pattern applies | Same pattern applies |
-| Safety | No automatic protection | No automatic protection |
-
-**Both frameworks require you to manually order operations correctly.**
-
-## Summary
-
-**The vulnerability:** Updating state after CPI calls  
-**The impact:** Multiple withdrawals, drained vaults, double-spending  
-**The fix:** Always update state before making CPI calls  
-**The lesson:** Checks-Effects-Interactions isn't just for Ethereum
-
-Solana's reentrancy is different from Ethereum's, but the solution is the same: update state first, then interact with other programs.
-
----
-
-**Next:** [Unsafe Account Closure →](/2025/01/27/unsafe-account-closure.html)
+<blockquote class="pro-tip">
+  <strong>🏆 Golden Rule:</strong><br>
+  <strong>Checks-Effects-Interactions</strong>. Memorize it. Live it. Update your state <em>before</em> you call <code>invoke</code> or <code>invoke_signed</code>.
+</blockquote>
