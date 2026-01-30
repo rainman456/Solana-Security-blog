@@ -1,5 +1,5 @@
 [workspace]
-members = []
+members = ["programs/*"]
 
 [toolchain]
 
@@ -8,7 +8,7 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-missing_signer_secure = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+secure = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
 
 [registry]
 url = "https://api.apr.dev"

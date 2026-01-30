@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
-pub mod missing_signer_secure {
+pub mod secure {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -17,7 +17,6 @@ pub mod missing_signer_secure {
         let vault = &mut ctx.accounts.vault;
         vault.balance = vault.balance.checked_add(amount).unwrap();
         
-        // Transfer SOL from user to vault
         let cpi_context = CpiContext::new(
             ctx.accounts.system_program.to_account_info(),
             anchor_lang::system_program::Transfer {
@@ -30,16 +29,13 @@ pub mod missing_signer_secure {
         Ok(())
     }
 
-    // ✅ SECURE: Proper signer check
     pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
         let vault = &mut ctx.accounts.vault;
         
-        // Signer<'info> already verified the signature
         require!(vault.owner == ctx.accounts.user.key(), ErrorCode::Unauthorized);
         
         vault.balance = vault.balance.checked_sub(amount).unwrap();
         
-        // Transfer SOL from vault to user
         **vault.to_account_info().try_borrow_mut_lamports()? -= amount;
         **ctx.accounts.user.try_borrow_mut_lamports()? += amount;
         
@@ -81,7 +77,6 @@ pub struct Deposit<'info> {
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
-    // ✅ SECURE: Uses Signer<'info>
     #[account(mut)]
     pub user: Signer<'info>,
     
