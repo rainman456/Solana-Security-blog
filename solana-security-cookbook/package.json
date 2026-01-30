@@ -1,0 +1,64 @@
+{
+    "name": "solana-security-cookbook",
+    "version": "1.0.0",
+    "description": "Educational resource for Solana security best practices with Anchor and Pinocchio examples",
+    "scripts": {
+        "test": "bun test",
+        "test:all": "bun test tests/*.test.ts",
+        "test:missing-signer": "bun test tests/01-missing-signer-check.test.ts",
+        "test:pda-validation": "bun test tests/02-incorrect-pda-validation.test.ts",
+        "test:overflow": "bun test tests/03-arithmetic-overflow.test.ts",
+        "test:reentrancy": "bun test tests/04-reentrancy-risk.test.ts",
+        "test:account-closure": "bun test tests/05-unsafe-account-closure.test.ts",
+        "build:anchor": "npm run build:anchor:01 && npm run build:anchor:02 && npm run build:anchor:03 && npm run build:anchor:04 && npm run build:anchor:05",
+        "build:anchor:01": "cd examples/01-missing-signer-check/anchor/vulnerable && anchor build && cd ../secure && anchor build",
+        "build:anchor:02": "cd examples/02-incorrect-pda-validation/anchor/vulnerable && anchor build && cd ../secure && anchor build",
+        "build:anchor:03": "cd examples/03-arithmetic-overflow/anchor/vulnerable && anchor build && cd ../secure && anchor build",
+        "build:anchor:04": "cd examples/04-reentrancy-risk/anchor/vulnerable && anchor build && cd ../secure && anchor build",
+        "build:anchor:05": "cd examples/05-unsafe-account-closure/anchor/vulnerable && anchor build && cd ../secure && anchor build",
+        "build:pinocchio": "npm run build:pinocchio:01 && npm run build:pinocchio:02 && npm run build:pinocchio:03 && npm run build:pinocchio:04 && npm run build:pinocchio:05",
+        "build:pinocchio:01": "cd examples/01-missing-signer-check/pinocchio/vulnerable && cargo build-sbf && cd ../secure && cargo build-sbf",
+        "build:pinocchio:02": "cd examples/02-incorrect-pda-validation/pinocchio/vulnerable && cargo build-sbf && cd ../secure && cargo build-sbf",
+        "build:pinocchio:03": "cd examples/03-arithmetic-overflow/pinocchio/vulnerable && cargo build-sbf && cd ../secure && cargo build-sbf",
+        "build:pinocchio:04": "cd examples/04-reentrancy-risk/pinocchio/vulnerable && cargo build-sbf && cd ../secure && cargo build-sbf",
+        "build:pinocchio:05": "cd examples/05-unsafe-account-closure/pinocchio/vulnerable && cargo build-sbf && cd ../secure && cargo build-sbf",
+        "serve": "bundle exec jekyll serve --watch",
+        "build:jekyll": "bundle exec jekyll build",
+        "clean": "rm -rf _site .jekyll-cache"
+    },
+    "keywords": [
+        "solana",
+        "security",
+        "anchor",
+        "pinocchio",
+        "blockchain",
+        "smart-contracts",
+        "web3",
+        "education"
+    ],
+    "author": "Solana Security Cookbook Contributors",
+    "license": "MIT",
+    "dependencies": {
+        "@coral-xyz/anchor": "^0.30.1",
+        "@solana/web3.js": "^1.95.3",
+        "@solana/spl-token": "^0.4.8"
+    },
+    "devDependencies": {
+        "@types/node": "^20.14.0",
+        "typescript": "^5.6.2",
+        "ts-node": "^10.9.2",
+        "bun-types": "^1.1.0"
+    },
+    "engines": {
+        "node": ">=18.0.0",
+        "bun": ">=1.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/your-username/solana-security-cookbook.git"
+    },
+    "bugs": {
+        "url": "https://github.com/your-username/solana-security-cookbook/issues"
+    },
+    "homepage": "https://your-username.github.io/solana-security-cookbook/"
+}
