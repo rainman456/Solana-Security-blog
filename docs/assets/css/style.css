@@ -461,6 +461,7 @@ footer.site-footer {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .code-header {
@@ -566,6 +567,8 @@ footer.site-footer {
     padding: 1rem;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    /* Critical for grid overflow */
 }
 
 .vuln-block h4 {
@@ -582,6 +585,8 @@ footer.site-footer {
     padding: 1rem;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    /* Critical for grid overflow */
 }
 
 .secure-block h4 {
