@@ -1,0 +1,24 @@
+<footer class="site-footer">
+    <div class="wrapper footer-container">
+        <div class="footer-col footer-col-1">
+            <span class="footer-title">{{ site.title | escape }}</span>
+            <p>{{ site.description | escape }}</p>
+        </div>
+
+        <div class="footer-col footer-col-2">
+            <span class="footer-heading">Resources</span>
+            <ul class="social-media-list">
+                {% if site.social_links.twitter %}
+                <li><a href="{{ site.social_links.twitter }}">Twitter</a></li>
+                {% endif %}
+                {% if site.social_links.github %}
+                <li><a href="{{ site.social_links.github }}">GitHub</a></li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <div class="footer-col footer-col-3">
+            <p class="copyright">© {{ 'now' | date: "%Y" }} Solana Security Lab. <br>Open Source & Educational.</p>
+        </div>
+    </div>
+</footer>

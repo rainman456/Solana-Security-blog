@@ -1,0 +1,12 @@
+<header class="site-header">
+    <div class="wrapper nav-container">
+        <a class="site-title" href="{{ " /" | relative_url }}">
+            <span class="logo-icon">🛡️</span> {{ site.title | escape }}
+        </a>
+
+        <nav class="site-nav">
+            <a href="{{ " /" | relative_url }}" class="nav-link {% if page.url == '/' %}active{% endif %}">Home</a>
+            <a href="https://github.com/solana-labs" target="_blank" class="nav-link">GitHub</a>
+        </nav>
+    </div>
+</header>
