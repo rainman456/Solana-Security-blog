@@ -1,0 +1,16 @@
+<div class="security-card">
+    <div class="comparison-grid">
+        <div class="vuln-block">
+            <h4>❌ Vulnerable</h4>
+            <p class="logic-desc">The logic flaw:</p>
+            {{ include.vulnerable_desc }}
+            <pre><code class="language-rust">{{ include.vulnerable_code }}</code></pre>
+        </div>
+        <div class="secure-block">
+            <h4>✅ Secure</h4>
+            <p class="logic-desc">The fix:</p>
+            {{ include.secure_desc }}
+            <pre><code class="language-rust">{{ include.secure_code }}</code></pre>
+        </div>
+    </div>
+</div>

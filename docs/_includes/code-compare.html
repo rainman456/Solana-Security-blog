@@ -1,0 +1,30 @@
+{% assign bad_content = include.bad | default: page.vulnerable_code %}
+{% assign good_content = include.good | default: page.secure_code %}
+{% assign bad_label = include.bad_label | default: "❌ The Vulnerability" %}
+{% assign good_label = include.good_label | default: "✅ The Fix" %}
+
+{% if bad_content and good_content %}
+<div class="comparison-wrapper">
+    <!-- Left: BAD -->
+    <div class="code-col vuln-col">
+        <div class="code-header">
+            <span class="label">{{ bad_label }}</span>
+            <span class="badge-bad">BAD</span>
+        </div>
+        <div class="code-window">
+            <pre><code class="language-rust">{{ bad_content | strip }}</code></pre>
+        </div>
+    </div>
+
+    <!-- Right: GOOD -->
+    <div class="code-col secure-col">
+        <div class="code-header">
+            <span class="label">{{ good_label }}</span>
+            <span class="badge-good">GOOD</span>
+        </div>
+        <div class="code-window">
+            <pre><code class="language-rust">{{ good_content | strip }}</code></pre>
+        </div>
+    </div>
+</div>
+{% endif %}

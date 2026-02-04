@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: " en" }}">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>{% if page.title %}{{ page.title | escape }} | {{ site.title | escape }}{% else %}{{ site.title | escape }}{%
+        endif %}</title>
+    <meta name="description"
+        content="{{ page.excerpt | default: site.description | strip_html | normalize_whitespace | truncate: 160 | escape }}">
+
+    <!-- Typography: Inter for UI/Body, Plus Jakarta Sans for Headings (Modern/Trusted feel) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ " /assets/css/style.css" | relative_url }}">
+</head>
+
+<body>
+
+    <!-- "Shell": Minimal Header -->
+    <header class="site-header">
+        <div class="wrapper nav-container">
+            <a class="site-title" href="{{ " /" | relative_url }}">
+                <span class="logo-icon">🛡️</span> {{ site.title | escape }}
+            </a>
+
+            <nav class="site-nav">
+                <a href="{{ " /" | relative_url }}" class="nav-link {% if page.url == '/' %}active{% endif %}">Home</a>
+                <a href="https://github.com/solana-labs" target="_blank" class="nav-link">GitHub</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Wrapper -->
+    <main class="page-content" aria-label="Content">
+        <div class="wrapper">
+            {{ content }}
+        </div>
+    </main>
+
+    <!-- "Shell": Product-like Footer -->
+    <footer class="site-footer">
+        <div class="wrapper footer-container">
+            <div class="footer-col footer-col-1">
+                <span class="footer-title">{{ site.title | escape }}</span>
+                <p>{{ site.description | escape }}</p>
+            </div>
+
+            <div class="footer-col footer-col-2">
+                <span class="footer-heading">Resources</span>
+                <ul class="social-media-list">
+                    {% if site.social_links.twitter %}
+                    <li><a href="{{ site.social_links.twitter }}">Twitter</a></li>
+                    {% endif %}
+                    {% if site.social_links.github %}
+                    <li><a href="{{ site.social_links.github }}">GitHub</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <div class="footer-col footer-col-3">
+                <p class="copyright">© {{ 'now' | date: "%Y" }} Solana Security Lab. <br>Open Source & Educational.</p>
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>

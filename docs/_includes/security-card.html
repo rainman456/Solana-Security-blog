@@ -1,16 +1,30 @@
-<div class="security-card">
-    <div class="comparison-grid">
-        <div class="vuln-block">
-            <h4>❌ Vulnerable</h4>
-            <p class="logic-desc">The logic flaw:</p>
-            {{ include.vulnerable_desc }}
-            <pre><code class="language-rust">{{ include.vulnerable_code }}</code></pre>
+<article class="security-card dashboard-card">
+    <div class="card-header">
+        <div class="risk-badge {{ include.post.risk_level | downcase }}">
+            {{ include.post.risk_level | default: "Unknown" }} Risk
         </div>
-        <div class="secure-block">
-            <h4>✅ Secure</h4>
-            <p class="logic-desc">The fix:</p>
-            {{ include.secure_desc }}
-            <pre><code class="language-rust">{{ include.secure_code }}</code></pre>
-        </div>
+        {% if include.post.difficulty %}
+        <span class="difficulty">{{ include.post.difficulty }}</span>
+        {% endif %}
     </div>
-</div>
+
+    <div class="card-content">
+        <h3>
+            <a href="{{ include.post.url | relative_url }}">
+                {{ include.post.title | escape }}
+            </a>
+        </h3>
+        <p>{{ include.post.description | truncate: 120 }}</p>
+    </div>
+
+    <div class="card-footer">
+        <div class="tags">
+            {% for tag in include.post.tags %}
+            <span class="tech-tag">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        <a href="{{ include.post.url | relative_url }}" class="learn-more">
+            Learn More →
+        </a>
+    </div>
+</article>

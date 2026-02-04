@@ -156,7 +156,7 @@ pub enum VaultError {
 }
 {% endcapture %}
 
-{% include security-card.html 
+{% include comparison-card.html 
    vulnerable_desc=vulnerable_desc 
    vulnerable_code=vulnerable_code 
    secure_desc=secure_desc 

@@ -54,3 +54,14 @@ defaults:
 # Sass/SCSS settings (since you have assets/css/style.scss)
 sass:
   style: compressed
+
+# Site Branding & Design System
+accent_color: "#9945FF"
+social_links:
+  twitter: "https://twitter.com/solana"
+  github: "https://github.com/solana-labs"
+  discord: "https://discord.com/invite/solana"
+
+header_pages:
+ - index.md
+ - security-guide.md

@@ -21,65 +21,9 @@ Building on Solana? Security should be your top priority. This cookbook teaches 
 ## The Big 5 Vulnerabilities
 
 <div class="vulnerability-grid">
-
-### 1. 🔑 Missing Signer Check
-**The \$10M Mistake**
-
-Forgetting to verify signatures is like a bank giving money to anyone who knows your account number.
-
-**Impact:** Complete loss of authorization - anyone can impersonate anyone  
-**Fix:** One word: `Signer<'info>`
-
-[Learn More →](/2025/01/27/missing-signer-check.html)
-
----
-
-### 2. 🎯 Incorrect PDA Validation
-**The Fake ID Problem**
-
-Not validating Program Derived Addresses lets attackers substitute malicious accounts.
-
-**Impact:** Unauthorized access to program-controlled accounts  
-**Fix:** Proper seed derivation and bump validation
-
-[Learn More →](/2025/01/27/incorrect-pda-validation.html)
-
----
-
-### 3. 🔢 Arithmetic Overflow
-**The Odometer Rollover**
-
-Integer overflow in release mode can cause balances to wrap around unexpectedly.
-
-**Impact:** Token minting exploits, balance manipulation  
-**Fix:** Use `checked_*` arithmetic methods
-
-[Learn More →](/2025/01/27/arithmetic-overflow.html)
-
----
-
-### 4. 🔄 Reentrancy Risk in CPI
-**The Double-Spend Attack**
-
-Updating state after cross-program calls allows attackers to re-enter your program.
-
-**Impact:** Funds drained through recursive calls  
-**Fix:** Update state before CPI calls
-
-[Learn More →](/2025/01/27/reentrancy-risk.html)
-
----
-
-### 5. 💀 Unsafe Account Closure
-**The Zombie Account**
-
-Improperly closing accounts can lead to revival attacks and rent theft.
-
-**Impact:** Account resurrection, rent reclamation exploits  
-**Fix:** Zero data and transfer all lamports
-
-[Learn More →](/2025/01/27/unsafe-account-closure.html)
-
+  {% for post in site.posts %}
+    {% include security-card.html post=post %}
+  {% endfor %}
 </div>
 
 ---
@@ -209,23 +153,7 @@ See the same vulnerability in both Anchor and Pinocchio:
 
 ---
 
-## Recent Posts
 
-<ul class="post-list">
-  {% for post in site.posts %}
-    <li>
-      <span class="post-meta">{{ post.date | date: "%b %-d, %Y" }}</span>
-      <h3>
-        <a class="post-link" href="{{ post.url | relative_url }}">
-          {{ post.title | escape }}
-        </a>
-      </h3>
-      <p>{{ post.excerpt }}</p>
-    </li>
-  {% endfor %}
-</ul>
-
----
 
 ## Ready to Secure Your Solana Programs?
 
