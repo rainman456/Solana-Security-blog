@@ -22,7 +22,7 @@
     --font-heading: 'Plus Jakarta Sans', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-    --container-width: 1000px;
+    --container-width: 1200px;
     --radius-sm: 6px;
     --radius-md: 12px;
 
@@ -450,27 +450,38 @@ footer.site-footer {
     max-height: 400px;
 }
 
-/* Code Comparison */
+/* ============================================
+   CODE COMPARISON - SIDE BY SIDE LAYOUT
+   ============================================ */
+
+/* Main wrapper for side-by-side comparison */
 .comparison-wrapper {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
-    margin-bottom: 3rem;
+    margin: 2.5rem 0;
+    width: 100%;
 }
 
+/* Individual column */
 .code-col {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    min-width: 0;
+    min-width: 0; /* Prevents overflow */
+    background: #ffffff;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
 }
 
+/* Header for each column */
 .code-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1rem;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 .code-header span.label {
@@ -479,12 +490,52 @@ footer.site-footer {
     font-size: 0.9rem;
 }
 
+/* Vulnerable column styling */
+.vuln-col .code-header {
+    background: #fee2e2;
+    border-bottom: 2px solid #fca5a5;
+}
+
+.vuln-col .code-header span.label {
+    color: #991b1b;
+}
+
+/* Secure column styling */
+.secure-col .code-header {
+    background: #d1fae5;
+    border-bottom: 2px solid #6ee7b7;
+}
+
+.secure-col .code-header span.label {
+    color: #065f46;
+}
+
+/* Badge styling */
+.badge-bad {
+    background: #dc2626;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.badge-good {
+    background: #059669;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+/* Code window */
 .code-window {
     background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    padding: 1.5rem;
     overflow-x: auto;
-    font-size: 0.85rem;
     flex-grow: 1;
 }
 
@@ -493,87 +544,59 @@ footer.site-footer {
     padding: 0;
     margin: 0;
     border: none;
+    overflow-x: auto;
 }
 
-.vuln-col .code-header {
-    background: #fee2e2;
-    border: 1px solid #fca5a5;
-    border-bottom: none;
+.code-window pre code {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #1e293b;
+    background: none;
+    border: none;
+    padding: 0;
+    display: block;
+    white-space: pre;
 }
 
-.vuln-col .code-header span.label {
-    color: #991b1b;
-}
-
+/* Vulnerable code window border */
 .vuln-col .code-window {
-    border: 1px solid #fca5a5;
-    border-top: none;
+    border-left: 4px solid #fca5a5;
 }
 
-.secure-col .code-header {
-    background: #d1fae5;
-    border: 1px solid #6ee7b7;
-    border-bottom: none;
-}
-
-.secure-col .code-header span.label {
-    color: #065f46;
-}
-
+/* Secure code window border */
 .secure-col .code-window {
-    border: 1px solid #6ee7b7;
-    border-top: none;
+    border-left: 4px solid #6ee7b7;
 }
 
-.badge-bad {
-    background: #dc2626;
-    color: white;
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 4px;
-}
+/* ============================================
+   COMPARISON CARD LAYOUT (alternative style)
+   ============================================ */
 
-.badge-good {
-    background: #059669;
-    color: white;
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 4px;
-}
-
-/* Security Cards (for comparison-card.html) */
 .security-card {
     background: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 2rem;
-    margin: 2rem 0;
+    margin: 2.5rem 0;
     box-shadow: var(--shadow-md);
 }
 
-/* Comparison Grid - side-by-side on desktop */
 .comparison-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 24px;
-    margin: 2.5rem 0;
-    align-items: start;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
 }
 
 .vuln-block,
 .secure-block {
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
     overflow: hidden;
-    /* Contains the header and code */
+    background: #ffffff;
     display: flex;
     flex-direction: column;
-    background: #fff;
-    box-shadow: var(--shadow-sm);
-    min-width: 0;
-    /* Prevents overflow from breaking grid */
 }
 
 .vuln-block {
@@ -587,56 +610,60 @@ footer.site-footer {
 .vuln-block h4,
 .secure-block h4 {
     margin: 0;
-    padding: 12px 16px;
+    padding: 0.75rem 1rem;
     font-family: var(--font-heading);
     font-weight: 700;
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    position: sticky;
-    top: 70px;
-    /* Offset for site header */
-    z-index: 10;
-    border-bottom: 1px solid var(--border-color);
 }
 
 .vuln-block h4 {
-    background-color: #fef2f2;
+    background-color: #fee2e2;
     color: #991b1b;
+    border-bottom: 1px solid #fca5a5;
 }
 
 .secure-block h4 {
-    background-color: #f0fdf4;
-    color: #166534;
+    background-color: #d1fae5;
+    color: #065f46;
+    border-bottom: 1px solid #6ee7b7;
 }
 
-.vuln-block .logic-desc,
-.secure-block .logic-desc {
-    padding: 16px;
+.logic-desc {
+    padding: 1rem;
     font-size: 0.95rem;
-    line-height: 1.5;
-    background: #fff;
+    line-height: 1.6;
+    background: #ffffff;
 }
 
-.vuln-block .code-block,
-.secure-block .code-block {
-    border-top: 1px solid var(--border-color);
-    background: #f8fafc;
+.logic-desc strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
 }
 
-.vuln-block .code-block pre,
-.secure-block .code-block pre {
+.logic-desc p {
     margin: 0;
-    padding: 16px;
+}
+
+.code-block {
+    background: #f8f9fa;
+    border-top: 1px solid var(--border-color);
+}
+
+.code-block pre {
+    margin: 0;
+    padding: 1rem;
     background: transparent;
     border: none;
     border-radius: 0;
 }
 
-.vuln-block .code-block code,
-.secure-block .code-block code {
+.code-block code {
     font-family: var(--font-mono);
     font-size: 0.85rem;
+    line-height: 1.5;
     color: #1e293b;
     background: none;
     border: none;
@@ -650,6 +677,11 @@ footer.site-footer {
     margin: 2rem 0;
     text-align: center;
     border: 1px solid var(--border-color);
+}
+
+.diagram-container img {
+    max-width: 100%;
+    height: auto;
 }
 
 blockquote {
@@ -672,6 +704,71 @@ blockquote.pro-tip {
 
 blockquote.pro-tip strong {
     color: var(--accent-purple);
+}
+
+/* Impact Grid */
+.impact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.impact-box,
+.rec-box {
+    padding: 1.5rem;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.impact-box {
+    background: rgba(239, 68, 68, 0.05);
+    border-left: 4px solid #ef4444;
+}
+
+.impact-box h4 {
+    color: #ef4444;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.rec-box {
+    background: rgba(34, 197, 94, 0.05);
+    border-left: 4px solid #22c55e;
+}
+
+.rec-box h4 {
+    color: #22c55e;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+/* Security Footer */
+.security-footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.security-footer h3 {
+    color: var(--accent-purple);
+    margin-bottom: 1rem;
+}
+
+.checklist {
+    list-style: none;
+    padding: 0;
+}
+
+.checklist li {
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.checklist input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
 }
 
 /* Buttons */
@@ -745,16 +842,29 @@ li {
     margin-bottom: 0.5rem;
 }
 
-/* Responsive */
-@media (max-width: 900px) {
-    .comparison-wrapper {
-        flex-direction: column;
-    }
+/* ============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================ */
 
-    .comparison-grid {
+/* Tablets and below - Stack code comparisons */
+@media (max-width: 1024px) {
+    .comparison-wrapper,
+    .comparison-grid,
+    .impact-grid {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
+    
+    .code-col {
+        margin-bottom: 1.5rem;
+    }
+    
+    :root {
+        --container-width: 100%;
+    }
+}
 
+@media (max-width: 900px) {
     .footer-container {
         grid-template-columns: 1fr;
     }
@@ -771,5 +881,39 @@ li {
 
     .vulnerability-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .wrapper {
+        padding: 0 1rem;
+    }
+    
+    .code-window {
+        padding: 1rem;
+    }
+    
+    .code-window pre code {
+        font-size: 0.8rem;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.75rem;
+    }
+    
+    h2 {
+        font-size: 1.25rem;
+    }
+    
+    .hero-summary {
+        padding: 1.5rem;
+    }
+    
+    .code-header {
+        padding: 0.5rem 0.75rem;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
     }
 }

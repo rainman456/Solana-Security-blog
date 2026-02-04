@@ -1,20 +1,23 @@
 <div class="security-card">
     <div class="comparison-grid">
+        <!-- VULNERABLE BLOCK -->
         <div class="vuln-block">
             <h4>❌ Vulnerable</h4>
             <div class="logic-desc">
                 <strong>The logic flaw:</strong>
-                {{ include.vulnerable_desc | markdownify }}
+                <div class="desc-content">{{ include.vulnerable_desc | markdownify }}</div>
             </div>
             <div class="code-block">
                 <pre><code class="language-rust">{{ include.vulnerable_code | strip }}</code></pre>
             </div>
         </div>
+        
+        <!-- SECURE BLOCK -->
         <div class="secure-block">
             <h4>✅ Secure</h4>
             <div class="logic-desc">
                 <strong>The fix:</strong>
-                {{ include.secure_desc | markdownify }}
+                <div class="desc-content">{{ include.secure_desc | markdownify }}</div>
             </div>
             <div class="code-block">
                 <pre><code class="language-rust">{{ include.secure_code | strip }}</code></pre>

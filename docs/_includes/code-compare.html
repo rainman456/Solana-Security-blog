@@ -5,22 +5,22 @@
 
 {% if bad_content and good_content %}
 <div class="comparison-wrapper">
-    <!-- Left: BAD -->
+    <!-- Left: VULNERABLE CODE -->
     <div class="code-col vuln-col">
         <div class="code-header">
             <span class="label">{{ bad_label }}</span>
-            <span class="badge-bad">BAD</span>
+            <span class="badge-bad">VULNERABLE</span>
         </div>
         <div class="code-window">
             <pre><code class="language-rust">{{ bad_content | strip }}</code></pre>
         </div>
     </div>
 
-    <!-- Right: GOOD -->
+    <!-- Right: SECURE CODE -->
     <div class="code-col secure-col">
         <div class="code-header">
             <span class="label">{{ good_label }}</span>
-            <span class="badge-good">GOOD</span>
+            <span class="badge-good">SECURE</span>
         </div>
         <div class="code-window">
             <pre><code class="language-rust">{{ good_content | strip }}</code></pre>
