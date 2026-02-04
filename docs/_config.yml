@@ -44,7 +44,7 @@ defaults:
       type: posts
     values:
       layout: post
-      author: "Your Name" # Optional: Replace with your name or handle
+      author: "Andre" # Optional: Replace with your name or handle
   - scope:
       path: ""
       type: docs
