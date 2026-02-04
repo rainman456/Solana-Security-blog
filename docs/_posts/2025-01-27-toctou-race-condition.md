@@ -4,11 +4,159 @@ title: "TOCTOU Race Condition"
 date: 2025-01-27
 category: "External Interactions"
 difficulty: "Advanced"
+risk_level: "High"
+description: "Malicious programs can call back into your program before state updates complete, draining funds repeatedly."
+impact: "Double-spending. Attackers can withdraw funds multiple times within a single transaction before the balance is updated."
+recommendation: "Follow Checks-Effects-Interactions pattern: update all state BEFORE making any CPIs."
+tags:
+  - Rust
+  - Reentrancy
+  - Checks-Effects-Interactions
 checklist: 
   - "Do you update state BEFORE making external calls (CPIs)?"
   - "Are you using a reentrancy guard (locked flag) when needed?"
   - "Does your instruction follow Checks-Effects-Interactions pattern?"
   - "Are state changes atomic and complete before any CPI?"
+vulnerable_code: |
+  #[derive(Accounts)]
+  pub struct Withdraw<'info> {
+      #[account(mut)]
+      pub user: Signer<'info>,
+      
+      #[account(
+          mut,
+          seeds = [b"vault"],
+          bump = vault.bump,
+      )]
+      pub vault: Account<'info, Vault>,
+      
+      #[account(mut)]
+      pub vault_token_account: Account<'info, TokenAccount>,
+      
+      #[account(mut)]
+      pub user_token_account: Account<'info, TokenAccount>,
+      
+      /// CHECK: Malicious program can exploit reentrancy
+      pub callback_program: UncheckedAccount<'info>,
+      
+      pub token_program: Program<'info, Token>,
+  }
+  
+  pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+      let vault = &mut ctx.accounts.vault;
+      let vault_ta = &ctx.accounts.vault_token_account;
+      
+      // ⏰ TIME OF CHECK: Verify sufficient balance
+      require!(
+          vault_ta.amount >= amount, 
+          VaultError::InsufficientFunds
+      );
+      
+      // 🚨 VULNERABILITY: Callback before state update
+      // This creates a reentrancy window
+      if ctx.accounts.callback_program.key() != &Pubkey::default() {
+          // Attacker's program can call withdraw() again here!
+          invoke_callback(ctx.accounts.callback_program)?;
+      }
+      
+      // 🔓 CPI BEFORE STATE UPDATE - DANGEROUS!
+      token::transfer(
+          CpiContext::new(
+              ctx.accounts.token_program.to_account_info(),
+              token::Transfer {
+                  from: vault_ta.to_account_info(),
+                  to: ctx.accounts.user_token_account.to_account_info(),
+                  authority: ctx.accounts.vault.to_account_info(),
+              },
+          ),
+          amount,
+      )?;
+      
+      // ⏰ TIME OF USE: Update state AFTER transfer
+      // ❌ Too late! Reentrant call already drained funds
+      vault.total_deposits = vault
+          .total_deposits
+          .checked_sub(amount)
+          .unwrap();
+      
+      Ok(())
+  }
+secure_code: |
+  #[account]
+  pub struct Vault {
+      pub total_deposits: u64,
+      pub bump: u8,
+      pub locked: bool,  // ✅ Reentrancy guard
+  }
+  
+  #[derive(Accounts)]
+  pub struct Withdraw<'info> {
+      #[account(mut)]
+      pub user: Signer<'info>,
+      
+      #[account(
+          mut,
+          seeds = [b"vault"],
+          bump = vault.bump,
+      )]
+      pub vault: Account<'info, Vault>,
+      
+      #[account(mut)]
+      pub vault_token_account: Account<'info, TokenAccount>,
+      
+      #[account(mut)]
+      pub user_token_account: Account<'info, TokenAccount>,
+      
+      pub token_program: Program<'info, Token>,
+  }
+  
+  pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+      let vault = &mut ctx.accounts.vault;
+      let vault_ta = &ctx.accounts.vault_token_account;
+      
+      // ✅ STEP 0: Reentrancy guard
+      require!(!vault.locked, VaultError::ReentrancyBlocked);
+      vault.locked = true;
+      
+      // ✅ STEP 1: CHECKS - Validate all preconditions
+      require!(
+          vault_ta.amount >= amount, 
+          VaultError::InsufficientFunds
+      );
+      
+      // ✅ STEP 2: EFFECTS - Update state BEFORE external calls
+      vault.total_deposits = vault
+          .total_deposits
+          .checked_sub(amount)
+          .unwrap();
+      
+      // ✅ STEP 3: INTERACTIONS - External calls AFTER state update
+      // Even if reentrancy occurs, state is already updated
+      token::transfer(
+          CpiContext::new(
+              ctx.accounts.token_program.to_account_info(),
+              token::Transfer {
+                  from: vault_ta.to_account_info(),
+                  to: ctx.accounts.user_token_account.to_account_info(),
+                  authority: vault.to_account_info(),
+              },
+          ),
+          amount,
+      )?;
+      
+      // ✅ Release reentrancy guard
+      vault.locked = false;
+      
+      Ok(())
+  }
+  
+  #[error_code]
+  pub enum VaultError {
+      #[msg("Insufficient funds in vault")]
+      InsufficientFunds,
+      #[msg("Reentrancy attempt blocked")]
+      ReentrancyBlocked,  // ✅ New error
+  }
 ---
 
 ## 📖 The Scenario
@@ -93,166 +241,8 @@ In 2021, several Solana AMM pools had similar TOCTOU vulnerabilities where:
 While not as catastrophic as The DAO, these incidents demonstrated that reentrancy is NOT just an Ethereum problem - **Solana programs are equally vulnerable if developers don't follow Checks-Effects-Interactions.**
 
 ## ⚔️ The Exploit
-### Vulnerable vs Secure
 
-{% capture vulnerable_desc %}
-Program checks balance, makes CPI to transfer funds, THEN updates state. During the CPI, attacker re-enters and exploits stale state.
-{% endcapture %}
-
-{% capture vulnerable_code %}
-#[derive(Accounts)]
-pub struct Withdraw<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-    
-    #[account(
-        mut,
-        seeds = [b"vault"],
-        bump = vault.bump,
-    )]
-    pub vault: Account<'info, Vault>,
-    
-    #[account(mut)]
-    pub vault_token_account: Account<'info, TokenAccount>,
-    
-    #[account(mut)]
-    pub user_token_account: Account<'info, TokenAccount>,
-    
-    /// CHECK: Malicious program can exploit reentrancy
-    pub callback_program: UncheckedAccount<'info>,
-    
-    pub token_program: Program<'info, Token>,
-}
-
-pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    let vault = &mut ctx.accounts.vault;
-    let vault_ta = &ctx.accounts.vault_token_account;
-    
-    // ⏰ TIME OF CHECK: Verify sufficient balance
-    require!(
-        vault_ta.amount >= amount, 
-        VaultError::InsufficientFunds
-    );
-    
-    // 🚨 VULNERABILITY: Callback before state update
-    // This creates a reentrancy window
-    if ctx.accounts.callback_program.key() != &Pubkey::default() {
-        // Attacker's program can call withdraw() again here!
-        invoke_callback(ctx.accounts.callback_program)?;
-    }
-    
-    // 🔓 CPI BEFORE STATE UPDATE - DANGEROUS!
-    token::transfer(
-        CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            token::Transfer {
-                from: vault_ta.to_account_info(),
-                to: ctx.accounts.user_token_account.to_account_info(),
-                authority: ctx.accounts.vault.to_account_info(),
-            },
-        ),
-        amount,
-    )?;
-    
-    // ⏰ TIME OF USE: Update state AFTER transfer
-    // ❌ Too late! Reentrant call already drained funds
-    vault.total_deposits = vault
-        .total_deposits
-        .checked_sub(amount)
-        .unwrap();
-    
-    Ok(())
-}
-{% endcapture %}
-
-{% capture secure_desc %}
-Program uses reentrancy guard and updates state BEFORE making any external calls (Checks-Effects-Interactions pattern).
-{% endcapture %}
-
-{% capture secure_code %}
-#[account]
-pub struct Vault {
-    pub total_deposits: u64,
-    pub bump: u8,
-    pub locked: bool,  // ✅ Reentrancy guard
-}
-
-#[derive(Accounts)]
-pub struct Withdraw<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-    
-    #[account(
-        mut,
-        seeds = [b"vault"],
-        bump = vault.bump,
-    )]
-    pub vault: Account<'info, Vault>,
-    
-    #[account(mut)]
-    pub vault_token_account: Account<'info, TokenAccount>,
-    
-    #[account(mut)]
-    pub user_token_account: Account<'info, TokenAccount>,
-    
-    pub token_program: Program<'info, Token>,
-}
-
-pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    let vault = &mut ctx.accounts.vault;
-    let vault_ta = &ctx.accounts.vault_token_account;
-    
-    // ✅ STEP 0: Reentrancy guard
-    require!(!vault.locked, VaultError::ReentrancyBlocked);
-    vault.locked = true;
-    
-    // ✅ STEP 1: CHECKS - Validate all preconditions
-    require!(
-        vault_ta.amount >= amount, 
-        VaultError::InsufficientFunds
-    );
-    
-    // ✅ STEP 2: EFFECTS - Update state BEFORE external calls
-    vault.total_deposits = vault
-        .total_deposits
-        .checked_sub(amount)
-        .unwrap();
-    
-    // ✅ STEP 3: INTERACTIONS - External calls AFTER state update
-    // Even if reentrancy occurs, state is already updated
-    token::transfer(
-        CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            token::Transfer {
-                from: vault_ta.to_account_info(),
-                to: ctx.accounts.user_token_account.to_account_info(),
-                authority: vault.to_account_info(),
-            },
-        ),
-        amount,
-    )?;
-    
-    // ✅ Release reentrancy guard
-    vault.locked = false;
-    
-    Ok(())
-}
-
-#[error_code]
-pub enum VaultError {
-    #[msg("Insufficient funds in vault")]
-    InsufficientFunds,
-    #[msg("Reentrancy attempt blocked")]
-    ReentrancyBlocked,  // ✅ New error
-}
-{% endcapture %}
-
-{% include comparison-card.html 
-   vulnerable_desc=vulnerable_desc 
-   vulnerable_code=vulnerable_code 
-   secure_desc=secure_desc 
-   secure_code=secure_code 
-%}
+{% include code-compare.html %}
 
 ## 🎯 Attack Walkthrough
 

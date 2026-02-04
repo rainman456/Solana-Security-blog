@@ -4,11 +4,127 @@ title: "Arbitrary CPI Validation"
 date: 2025-01-27
 category: "External Interactions"
 difficulty: "Advanced"
+risk_level: "High"
+description: "Accepting arbitrary program accounts for CPIs allows attackers to pass malicious programs that steal funds or manipulate state."
+impact: "Complete loss of funds or unauthorized actions. Attackers can execute arbitrary code with your program's authority."
+recommendation: "Hardcode expected program IDs or strictly validate them against a whitelist before making any CPI."
+tags:
+  - Rust
+  - CPI
+  - Anchor
 checklist: 
   - "Are you hardcoding expected program IDs before CPIs?"
   - "Do you validate that the program account matches the expected address?"
   - "For Anchor: Are you using Program<'info, T> with type safety?"
   - "Are you using constraint checks on program accounts?"
+vulnerable_code: |
+  #[derive(Accounts)]
+  pub struct ExecuteSwap<'info> {
+      #[account(mut)]
+      pub user: Signer<'info>,
+      
+      // ❌ VULNERABLE: Accepts ANY program ID!
+      // Attacker can pass their malicious program here
+      /// CHECK: No validation - DANGEROUS!
+      pub swap_program: UncheckedAccount<'info>,
+      
+      #[account(
+          mut,
+          constraint = vault_token_account.owner == vault.key()
+      )]
+      pub vault_token_account: Account<'info, TokenAccount>,
+      
+      #[account(mut)]
+      pub user_token_account: Account<'info, TokenAccount>,
+      
+      #[account(
+          seeds = [b"vault"],
+          bump = vault.bump,
+      )]
+      pub vault: Account<'info, Vault>,
+  }
+  
+  pub fn execute_swap(ctx: Context<ExecuteSwap>, amount: u64) -> Result<()> {
+      // ❌ CPI to UNVALIDATED program
+      // Attacker's malicious program receives vault authority!
+      let cpi_program = ctx.accounts.swap_program.to_account_info();
+      let cpi_accounts = Transfer {
+          from: ctx.accounts.vault_token_account.to_account_info(),
+          to: ctx.accounts.user_token_account.to_account_info(),
+          authority: ctx.accounts.vault.to_account_info(),  // ← Vault authority!
+      };
+      
+      let seeds = &[b"vault", &[ctx.accounts.vault.bump]];
+      let signer_seeds = &[&seeds[..]];
+      
+      let cpi_ctx = CpiContext::new_with_signer(
+          cpi_program,  // ← Calls attacker's program!
+          cpi_accounts,
+          signer_seeds
+      );
+      
+      transfer(cpi_ctx, amount)?;  // ❌ Malicious program executes
+      Ok(())
+  }
+secure_code: |
+  #[derive(Accounts)]
+  pub struct ExecuteSwap<'info> {
+      #[account(mut)]
+      pub user: Signer<'info>,
+      
+      // ✅ SECURE: Type-safe program validation
+      // Anchor automatically checks this is the real Token Program
+      #[account(
+          address = token::ID @ VaultError::InvalidProgram,
+      )]
+      pub token_program: Program<'info, Token>,
+      
+      #[account(
+          mut,
+          constraint = vault_token_account.owner == vault.key() 
+              @ VaultError::InvalidOwner,
+          constraint = vault_token_account.mint == user_token_account.mint 
+              @ VaultError::InvalidMint,
+      )]
+      pub vault_token_account: Account<'info, TokenAccount>,
+      
+      #[account(mut)]
+      pub user_token_account: Account<'info, TokenAccount>,
+      
+      #[account(
+          seeds = [b"vault"],
+          bump = vault.bump,
+      )]
+      pub vault: Account<'info, Vault>,
+  }
+  
+  pub fn execute_swap(ctx: Context<ExecuteSwap>, amount: u64) -> Result<()> {
+      // ✅ CPI to VALIDATED Token Program only
+      // Guaranteed to be legitimate program
+      anchor_spl::token::transfer(
+          CpiContext::new(
+              ctx.accounts.token_program.to_account_info(),  // ✅ Validated!
+              anchor_spl::token::Transfer {
+                  from: ctx.accounts.vault_token_account.to_account_info(),
+                  to: ctx.accounts.user_token_account.to_account_info(),
+                  authority: ctx.accounts.vault.to_account_info(),
+              },
+          ),
+          amount,
+      )?;
+      
+      Ok(())
+  }
+  
+  #[error_code]
+  pub enum VaultError {
+      #[msg("Token account owner must be vault")]
+      InvalidOwner,
+      #[msg("Token account mints must match")]
+      InvalidMint,
+      #[msg("Invalid program ID - must be Token program")]
+      InvalidProgram,  // ← New error for program validation
+  }
 ---
 
 ## 📖 The Scenario
@@ -93,134 +209,8 @@ pub fn mint_cash(ctx: Context<MintCash>, amount: u64) -> Result<()> {
 - This exploit pattern has been repeated in multiple protocols since
 
 ## ⚔️ The Exploit
-### Vulnerable vs Secure
 
-{% capture vulnerable_desc %}
-Program accepts ANY program account for CPI without validation. Attacker supplies their malicious program that drains vault funds.
-{% endcapture %}
-
-{% capture vulnerable_code %}
-#[derive(Accounts)]
-pub struct ExecuteSwap<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-    
-    // ❌ VULNERABLE: Accepts ANY program ID!
-    // Attacker can pass their malicious program here
-    /// CHECK: No validation - DANGEROUS!
-    pub swap_program: UncheckedAccount<'info>,
-    
-    #[account(
-        mut,
-        constraint = vault_token_account.owner == vault.key()
-    )]
-    pub vault_token_account: Account<'info, TokenAccount>,
-    
-    #[account(mut)]
-    pub user_token_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        seeds = [b"vault"],
-        bump = vault.bump,
-    )]
-    pub vault: Account<'info, Vault>,
-}
-
-pub fn execute_swap(ctx: Context<ExecuteSwap>, amount: u64) -> Result<()> {
-    // ❌ CPI to UNVALIDATED program
-    // Attacker's malicious program receives vault authority!
-    let cpi_program = ctx.accounts.swap_program.to_account_info();
-    let cpi_accounts = Transfer {
-        from: ctx.accounts.vault_token_account.to_account_info(),
-        to: ctx.accounts.user_token_account.to_account_info(),
-        authority: ctx.accounts.vault.to_account_info(),  // ← Vault authority!
-    };
-    
-    let seeds = &[b"vault", &[ctx.accounts.vault.bump]];
-    let signer_seeds = &[&seeds[..]];
-    
-    let cpi_ctx = CpiContext::new_with_signer(
-        cpi_program,  // ← Calls attacker's program!
-        cpi_accounts,
-        signer_seeds
-    );
-    
-    transfer(cpi_ctx, amount)?;  // ❌ Malicious program executes
-    Ok(())
-}
-{% endcapture %}
-
-{% capture secure_desc %}
-Program validates the CPI target is the legitimate Token Program before making any calls.
-{% endcapture %}
-
-{% capture secure_code %}
-#[derive(Accounts)]
-pub struct ExecuteSwap<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-    
-    // ✅ SECURE: Type-safe program validation
-    // Anchor automatically checks this is the real Token Program
-    #[account(
-        address = token::ID @ VaultError::InvalidProgram,
-    )]
-    pub token_program: Program<'info, Token>,
-    
-    #[account(
-        mut,
-        constraint = vault_token_account.owner == vault.key() 
-            @ VaultError::InvalidOwner,
-        constraint = vault_token_account.mint == user_token_account.mint 
-            @ VaultError::InvalidMint,
-    )]
-    pub vault_token_account: Account<'info, TokenAccount>,
-    
-    #[account(mut)]
-    pub user_token_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        seeds = [b"vault"],
-        bump = vault.bump,
-    )]
-    pub vault: Account<'info, Vault>,
-}
-
-pub fn execute_swap(ctx: Context<ExecuteSwap>, amount: u64) -> Result<()> {
-    // ✅ CPI to VALIDATED Token Program only
-    // Guaranteed to be legitimate program
-    anchor_spl::token::transfer(
-        CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),  // ✅ Validated!
-            anchor_spl::token::Transfer {
-                from: ctx.accounts.vault_token_account.to_account_info(),
-                to: ctx.accounts.user_token_account.to_account_info(),
-                authority: ctx.accounts.vault.to_account_info(),
-            },
-        ),
-        amount,
-    )?;
-    
-    Ok(())
-}
-
-#[error_code]
-pub enum VaultError {
-    #[msg("Token account owner must be vault")]
-    InvalidOwner,
-    #[msg("Token account mints must match")]
-    InvalidMint,
-    #[msg("Invalid program ID - must be Token program")]
-    InvalidProgram,  // ← New error for program validation
-}
-{% endcapture %}
-
-{% include comparison-card.html 
-   vulnerable_desc=vulnerable_desc 
-   vulnerable_code=vulnerable_code 
-   secure_desc=secure_desc 
-   secure_code=secure_code 
-%}
+{% include code-compare.html %}
 
 ## 🎯 Attack Walkthrough
 

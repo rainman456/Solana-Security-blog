@@ -4,11 +4,115 @@ title: "Incorrect PDA Validation"
 date: 2025-01-27
 category: "Identity & Access Control"
 difficulty: "Intermediate"
+risk_level: "Critical"
+description: "Accepting a PDA account without validating its seeds allows attackers to use fake accounts."
+impact: "Complete loss of funds. Attackers can substitute control accounts to bypass authorization or steal funds."
+recommendation: "Always validate that the account address matches the expected seeds and bump."
+tags:
+  - Rust
+  - Anchor
+  - PDA Validation
 checklist: 
   - "Are all PDAs derived using unique seeds (e.g., user pubkey)?"
   - "Does your instruction verify that the passed account matches the derived PDA?"
   - "For Anchor: Are you using the `seeds` and `bump` constraints?"
   - "Do you validate PDAs on EVERY instruction that uses them?"
+vulnerable_code: |
+  use anchor_lang::prelude::*;
+  
+  #[derive(Accounts)]
+  pub struct Withdraw<'info> {
+      #[account(mut)]
+      pub user: Signer<'info>,
+      
+      // ❌ CRITICAL VULNERABILITY: No seeds/bump validation!
+      // Attacker can pass ANY account here
+      #[account(mut)]
+      pub vault: Account<'info, Vault>,
+  }
+  
+  pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+      let vault = &mut ctx.accounts.vault;
+      
+      // ❌ This ownership check is USELESS without PDA validation
+      // Attacker can create their own vault with user as owner!
+      require!(
+          vault.owner == ctx.accounts.user.key(),
+          ErrorCode::Unauthorized
+      );
+      
+      vault.balance = vault
+          .balance
+          .checked_sub(amount)
+          .ok_or(ErrorCode::InsufficientFunds)?;
+      
+      **vault.to_account_info().try_borrow_mut_lamports()? -= amount;
+      **ctx.accounts.user.try_borrow_mut_lamports()? += amount;
+      
+      Ok(())
+  }
+  
+  #[account]
+  pub struct Vault {
+      pub owner: Pubkey,
+      pub balance: u64,
+  }
+  
+  #[error_code]
+  pub enum ErrorCode {
+      #[msg("Unauthorized")]
+      Unauthorized,
+      #[msg("Insufficient funds")]
+      InsufficientFunds,
+  }
+secure_code: |
+  use anchor_lang::prelude::*;
+  
+  #[derive(Accounts)]
+  pub struct Withdraw<'info> {
+      #[account(mut)]
+      pub user: Signer<'info>,
+      
+      // ✅ SECURE: Anchor verifies address derivation
+      #[account(
+          mut,
+          seeds = [b"vault", user.key().as_ref()],  // ← Must match these seeds
+          bump,  // ← Must use correct bump
+          constraint = vault.owner == user.key() @ ErrorCode::Unauthorized
+      )]
+      pub vault: Account<'info, Vault>,
+  }
+  
+  pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+      let vault = &mut ctx.accounts.vault;
+      
+      // ✅ Ownership check is now meaningful
+      // We know this vault was derived from user's pubkey
+      
+      vault.balance = vault
+          .balance
+          .checked_sub(amount)
+          .ok_or(ErrorCode::InsufficientFunds)?;
+      
+      **vault.to_account_info().try_borrow_mut_lamports()? -= amount;
+      **ctx.accounts.user.try_borrow_mut_lamports()? += amount;
+      
+      Ok(())
+  }
+  
+  #[account]
+  pub struct Vault {
+      pub owner: Pubkey,
+      pub balance: u64,
+  }
+  
+  #[error_code]
+  pub enum ErrorCode {
+      #[msg("Unauthorized")]
+      Unauthorized,
+      #[msg("Insufficient funds")]
+      InsufficientFunds,
+  }
 ---
 
 ## 📖 The Scenario
@@ -164,122 +268,8 @@ pub struct Withdraw<'info> {
 **Key Lesson**: PDA validation isn't just good practice - it's the difference between a secure protocol and a $100M honeypot.
 
 ## ⚔️ The Exploit
-### Vulnerable vs Secure
 
-{% capture vulnerable_desc %}
-The program accepts `vault` as an argument but never verifies it matches the seeds. The attacker can pass a fake vault they created.
-{% endcapture %}
-
-{% capture vulnerable_code %}
-use anchor_lang::prelude::*;
-
-#[derive(Accounts)]
-pub struct Withdraw<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-    
-    // ❌ CRITICAL VULNERABILITY: No seeds/bump validation!
-    // Attacker can pass ANY account here
-    #[account(mut)]
-    pub vault: Account<'info, Vault>,
-}
-
-pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    let vault = &mut ctx.accounts.vault;
-    
-    // ❌ This ownership check is USELESS without PDA validation
-    // Attacker can create their own vault with user as owner!
-    require!(
-        vault.owner == ctx.accounts.user.key(),
-        ErrorCode::Unauthorized
-    );
-    
-    vault.balance = vault
-        .balance
-        .checked_sub(amount)
-        .ok_or(ErrorCode::InsufficientFunds)?;
-    
-    **vault.to_account_info().try_borrow_mut_lamports()? -= amount;
-    **ctx.accounts.user.try_borrow_mut_lamports()? += amount;
-    
-    Ok(())
-}
-
-#[account]
-pub struct Vault {
-    pub owner: Pubkey,
-    pub balance: u64,
-}
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Unauthorized")]
-    Unauthorized,
-    #[msg("Insufficient funds")]
-    InsufficientFunds,
-}
-{% endcapture %}
-
-{% capture secure_desc %}
-Anchor validates that `vault` MUST equal the address derived from `[b"vault", user.key()]` using the `seeds` and `bump` constraints.
-{% endcapture %}
-
-{% capture secure_code %}
-use anchor_lang::prelude::*;
-
-#[derive(Accounts)]
-pub struct Withdraw<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-    
-    // ✅ SECURE: Anchor verifies address derivation
-    #[account(
-        mut,
-        seeds = [b"vault", user.key().as_ref()],  // ← Must match these seeds
-        bump,  // ← Must use correct bump
-        constraint = vault.owner == user.key() @ ErrorCode::Unauthorized
-    )]
-    pub vault: Account<'info, Vault>,
-}
-
-pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    let vault = &mut ctx.accounts.vault;
-    
-    // ✅ Ownership check is now meaningful
-    // We know this vault was derived from user's pubkey
-    
-    vault.balance = vault
-        .balance
-        .checked_sub(amount)
-        .ok_or(ErrorCode::InsufficientFunds)?;
-    
-    **vault.to_account_info().try_borrow_mut_lamports()? -= amount;
-    **ctx.accounts.user.try_borrow_mut_lamports()? += amount;
-    
-    Ok(())
-}
-
-#[account]
-pub struct Vault {
-    pub owner: Pubkey,
-    pub balance: u64,
-}
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Unauthorized")]
-    Unauthorized,
-    #[msg("Insufficient funds")]
-    InsufficientFunds,
-}
-{% endcapture %}
-
-{% include comparison-card.html 
-   vulnerable_desc=vulnerable_desc 
-   vulnerable_code=vulnerable_code 
-   secure_desc=secure_desc 
-   secure_code=secure_code 
-%}
+{% include code-compare.html %}
 
 ## 🎯 Attack Walkthrough
 

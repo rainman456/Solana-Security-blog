@@ -60,6 +60,10 @@ Computers typically use **fixed-size integers**. They don't have infinite space.
 
 If your code allows a user to withdraw more than they have, `0 - 100` doesn't equal `-100`. In `u64` land, it equals `18,446,744,073,709,551,516`. Oops.
 
+## ⚔️ The Exploit
+
+{% include code-compare.html %}
+
 ## 🧠 Mental Model: The Odometer
 
 Always remember the car odometer:

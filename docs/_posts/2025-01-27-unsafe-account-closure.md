@@ -4,11 +4,61 @@ title: "Unsafe Account Closure"
 date: 2025-01-27
 category: "Data Integrity"
 difficulty: "Intermediate"
+risk_level: "High"
+description: "Draining lamports without zeroing data and reassigning ownership creates zombie accounts that can be revived and exploited."
+impact: "Revival attacks. Attackers can re-fund closed accounts and exploit stale data/permissions to drain funds or manipulate state."
+recommendation: "Always use Anchor's `close = target` constraint. If manual closure is required, transfer lamports, zero data, AND reassign owner to System Program."
+tags:
+  - Rust
+  - Account Management
+  - Anchor
 checklist: 
   - "Are you using Anchor's `close` constraint?"
   - "If manual: Did you transfer ALL lamports out?"
   - "If manual: Did you zero the data array?"
   - "If manual: Did you assign the owner to System Program?"
+vulnerable_code: |
+  pub fn close_vault(ctx: Context<CloseVault>) -> Result<()> {
+      // ❌ VULNERABLE: Only transfers lamports!
+      // Account remains owned by program with data intact
+      
+      let vault = &ctx.accounts.vault;
+      let user = &ctx.accounts.user;
+      
+      // Transfer lamports to user
+      **user.to_account_info().try_borrow_mut_lamports()? += vault.to_account_info().lamports();
+      **vault.to_account_info().try_borrow_mut_lamports()? = 0;
+      
+      // ❌ CRITICAL FLAWS:
+      // 1. Account still owned by our program
+      // 2. Data (vault.owner, vault.balance) still exists
+      // 3. Attacker can re-fund and exploit stale data
+      
+      Ok(())
+  }
+secure_code: |
+  // ✅ SECURE: Using Anchor's close constraint
+  #[derive(Accounts)]
+  pub struct CloseVault<'info> {
+      #[account(mut)]
+      pub user: Signer<'info>,
+      
+      #[account(
+          mut,
+          close = user,  // ← Magic! Does all 3 steps:
+          // 1. Transfers lamports to 'user'
+          // 2. Zeros account data
+          // 3. Reassigns owner to System Program
+          constraint = vault.owner == user.key()
+      )]
+      pub vault: Account<'info, Vault>,
+  }
+  
+  pub fn close_vault(ctx: Context<CloseVault>) -> Result<()> {
+      // ✅ Anchor handles everything automatically
+      // Account is properly destroyed and cannot be revived
+      Ok(())
+  }
 ---
 
 ## 📖 The Scenario
@@ -27,51 +77,8 @@ If you drain the lamports but leave the account **owned by your program** with i
 </div>
 
 ## ⚔️ The Exploit
-### Vulnerable vs Secure
 
-{% capture vulnerable_desc %}
-Manually transferring lamports looks correct, but fails to "clean up" the deed (Owner) or the contents (Data).
-{% endcapture %}
-
-{% capture vulnerable_code %}
-pub fn close(ctx: Context<Close>) -> Result<()> {
-    // ❌ Only moves money!
-    let dest = &ctx.accounts.user;
-    let vault = &ctx.accounts.vault;
-    **dest.lamports.borrow_mut() += vault.lamports();
-    **vault.lamports.borrow_mut() = 0;
-    
-    // Account is still owned by Program!
-    // Data is still inside!
-}
-{% endcapture %}
-
-{% capture secure_desc %}
-Using Anchor's `close` constraint handles the entire "Garbage Collection" ritual for you.
-{% endcapture %}
-
-{% capture secure_code %}
-#[account]
-pub struct Close<'info> {
-    #[account(
-        mut, 
-        // ✅ Magic Constraint
-        // 1. Zeros data
-        // 2. Transfers lamports
-        // 3. Reassigns owner to System Program
-        close = user
-    )]
-    pub vault: Account<'info, Vault>,
-    pub user: SystemAccount<'info>,
-}
-{% endcapture %}
-
-{% include comparison-card.html 
-   vulnerable_desc=vulnerable_desc 
-   vulnerable_code=vulnerable_code 
-   secure_desc=secure_desc 
-   secure_code=secure_code 
-%}
+{% include code-compare.html %}
 
 ## 🧠 Mental Model: The Burn & Salting
 Closing an account effectively means destroying it forever.

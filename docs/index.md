@@ -158,7 +158,7 @@ See the same vulnerability in both Anchor and Pinocchio:
 ## Ready to Secure Your Solana Programs?
 
 <div class="cta-buttons">
-  <a href="/2025/01/27/missing-signer-check.html" class="btn btn-primary">Start Learning →</a>
+  <a href="{{ '/identity & access control/2025/01/27/missing-signer-check.html' | relative_url }}" class="btn btn-primary">Start Learning →</a>
   <a href="https://github.com/your-username/solana-security-cookbook" class="btn btn-secondary">View on GitHub</a>
 </div>
 

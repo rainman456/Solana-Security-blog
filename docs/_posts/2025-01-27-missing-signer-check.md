@@ -4,10 +4,113 @@ title: "The Missing Signer Check"
 date: 2025-01-27
 category: "Identity & Access Control"
 difficulty: "Beginner"
+risk_level: "High"
+description: "Without Signer<'info>, anyone can impersonate a user by just passing their public key."
+impact: "Complete loss of funds. Attackers can perform privileged actions (withdrawals) on behalf of victims without their permission."
+recommendation: "Always use Signer<'info> for any account that authorizes an action."
+tags:
+  - Rust
+  - Anchor
+  - Signer Verification
 checklist: 
   - "Does every sensitive instruction use `Signer<'info>` for the authority?"
   - "Did you double check if an account `is_signer` before transferring funds?"
   - "Are you using `AccountInfo<'info>` where you should use `Signer<'info>`?"
+vulnerable_code: |
+  use anchor_lang::prelude::*;
+  
+  #[derive(Accounts)]
+  pub struct Withdraw<'info> {
+      // ❌ CRITICAL VULNERABILITY: AccountInfo doesn't verify signature!
+      #[account(mut)]
+      pub user: AccountInfo<'info>,  // ← This is the bug
+      
+      #[account(
+          mut,
+          seeds = [b"vault", user.key().as_ref()],
+          bump
+      )]
+      pub vault: Account<'info, Vault>,
+  }
+  
+  pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+      let user = &ctx.accounts.user;
+      let vault = &mut ctx.accounts.vault;
+      
+      // ❌ This check is USELESS without signature verification
+      // Anyone can pass any public key here!
+      require!(
+          vault.owner == user.key(),
+          ErrorCode::Unauthorized
+      );
+      
+      // ❌ DANGER: Transferring funds based on unverified identity
+      vault.balance = vault.balance.checked_sub(amount).unwrap();
+      
+      **vault.to_account_info().try_borrow_mut_lamports()? -= amount;
+      **user.try_borrow_mut_lamports()? += amount;
+      
+      Ok(())
+  }
+  
+  #[account]
+  pub struct Vault {
+      pub owner: Pubkey,
+      pub balance: u64,
+  }
+  
+  #[error_code]
+  pub enum ErrorCode {
+      #[msg("Unauthorized")]
+      Unauthorized,
+  }
+secure_code: |
+  use anchor_lang::prelude::*;
+  
+  #[derive(Accounts)]
+  pub struct Withdraw<'info> {
+      // ✅ FIX: Signer<'info> requires valid signature!
+      #[account(mut)]
+      pub user: Signer<'info>,  // ← One word change, total protection
+      
+      #[account(
+          mut,
+          seeds = [b"vault", user.key().as_ref()],
+          bump,
+          constraint = vault.owner == user.key() @ ErrorCode::Unauthorized
+      )]
+      pub vault: Account<'info, Vault>,
+  }
+  
+  pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+      // ✅ Anchor has already verified user SIGNED this transaction
+      // If they didn't sign, transaction would have failed before reaching here
+      let vault = &mut ctx.accounts.vault;
+      
+      vault.balance = vault.balance
+          .checked_sub(amount)
+          .ok_or(ErrorCode::InsufficientFunds)?;
+      
+      // ✅ SAFE: We know user proved they own this account
+      **vault.to_account_info().try_borrow_mut_lamports()? -= amount;
+      **ctx.accounts.user.try_borrow_mut_lamports()? += amount;
+      
+      Ok(())
+  }
+  
+  #[account]
+  pub struct Vault {
+      pub owner: Pubkey,
+      pub balance: u64,
+  }
+  
+  #[error_code]
+  pub enum ErrorCode {
+      #[msg("Unauthorized")]
+      Unauthorized,
+      #[msg("Insufficient funds")]
+      InsufficientFunds,
+  }
 ---
 
 ## 📖 The Scenario
@@ -103,121 +206,8 @@ pub fn remove_liquidity(ctx: Context<RemoveLiquidity>, amount: u64) -> Result<()
 This vulnerability class is so fundamental that it's often called the "Hello World" of smart contract exploits. It's simple to understand but devastating in impact. The key lesson: **In Solana, reading an account is free - but acting on behalf of an account requires proof of ownership.**
 
 ## ⚔️ The Exploit
-### Vulnerable vs Secure
 
-{% capture vulnerable_desc %}
-Using `AccountInfo<'info>` allows anyone to pass ANY public key as the "authority" without proving ownership.
-{% endcapture %}
-
-{% capture vulnerable_code %}
-use anchor_lang::prelude::*;
-
-#[derive(Accounts)]
-pub struct Withdraw<'info> {
-    // ❌ CRITICAL VULNERABILITY: AccountInfo doesn't verify signature!
-    #[account(mut)]
-    pub user: AccountInfo<'info>,  // ← This is the bug
-    
-    #[account(
-        mut,
-        seeds = [b"vault", user.key().as_ref()],
-        bump
-    )]
-    pub vault: Account<'info, Vault>,
-}
-
-pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    let user = &ctx.accounts.user;
-    let vault = &mut ctx.accounts.vault;
-    
-    // ❌ This check is USELESS without signature verification
-    // Anyone can pass any public key here!
-    require!(
-        vault.owner == user.key(),
-        ErrorCode::Unauthorized
-    );
-    
-    // ❌ DANGER: Transferring funds based on unverified identity
-    vault.balance = vault.balance.checked_sub(amount).unwrap();
-    
-    **vault.to_account_info().try_borrow_mut_lamports()? -= amount;
-    **user.try_borrow_mut_lamports()? += amount;
-    
-    Ok(())
-}
-
-#[account]
-pub struct Vault {
-    pub owner: Pubkey,
-    pub balance: u64,
-}
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Unauthorized")]
-    Unauthorized,
-}
-{% endcapture %}
-
-{% capture secure_desc %}
-Using `Signer<'info>` in Anchor automatically enforces signature verification - Anchor runtime checks it MUST have signed.
-{% endcapture %}
-
-{% capture secure_code %}
-use anchor_lang::prelude::*;
-
-#[derive(Accounts)]
-pub struct Withdraw<'info> {
-    // ✅ FIX: Signer<'info> requires valid signature!
-    #[account(mut)]
-    pub user: Signer<'info>,  // ← One word change, total protection
-    
-    #[account(
-        mut,
-        seeds = [b"vault", user.key().as_ref()],
-        bump,
-        constraint = vault.owner == user.key() @ ErrorCode::Unauthorized
-    )]
-    pub vault: Account<'info, Vault>,
-}
-
-pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    // ✅ Anchor has already verified user SIGNED this transaction
-    // If they didn't sign, transaction would have failed before reaching here
-    let vault = &mut ctx.accounts.vault;
-    
-    vault.balance = vault.balance
-        .checked_sub(amount)
-        .ok_or(ErrorCode::InsufficientFunds)?;
-    
-    // ✅ SAFE: We know user proved they own this account
-    **vault.to_account_info().try_borrow_mut_lamports()? -= amount;
-    **ctx.accounts.user.try_borrow_mut_lamports()? += amount;
-    
-    Ok(())
-}
-
-#[account]
-pub struct Vault {
-    pub owner: Pubkey,
-    pub balance: u64,
-}
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Unauthorized")]
-    Unauthorized,
-    #[msg("Insufficient funds")]
-    InsufficientFunds,
-}
-{% endcapture %}
-
-{% include comparison-card.html 
-   vulnerable_desc=vulnerable_desc 
-   vulnerable_code=vulnerable_code 
-   secure_desc=secure_desc 
-   secure_code=secure_code 
-%}
+{% include code-compare.html %}
 
 ## 🎯 Attack Walkthrough
 

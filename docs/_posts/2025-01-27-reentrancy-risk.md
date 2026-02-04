@@ -4,10 +4,71 @@ title: "Cross-Program Reentrancy"
 date: 2025-01-27
 category: "External Interactions"
 difficulty: "Advanced"
+risk_level: "Critical"
+description: "Malicious programs can call back into your program before state updates complete, draining funds repeatedly."
+impact: "Complete loss of funds. Attackers can withdraw unlimited amounts by re-entering the withdraw function before balance updates."
+recommendation: "Follow Checks-Effects-Interactions pattern: update all state BEFORE making any CPIs (Cross-Program Invocations)."
+tags:
+  - Rust
+  - CPI
+  - Reentrancy
 checklist: 
   - "Do you update state BEFORE calling another program (CPI)?"
   - "Are you following the 'Checks-Effects-Interactions' pattern?"
   - "Be careful with 'invoke_signed' if you haven't updated balances yet."
+vulnerable_code: |
+  pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+      // ❌ VULNERABLE: Interactions BEFORE Effects
+      
+      // 1. Check Balance
+      require!(
+          ctx.accounts.vault.balance >= amount,
+          ErrorCode::InsufficientFunds
+      );
+  
+      // 2. Transfer (CPI) - DANGER ZONE 🚨
+      // Control hands over to recipient here!
+      // They can call withdraw() again before we update balance!
+      anchor_lang::solana_program::program::invoke(
+          &system_instruction::transfer(
+              ctx.accounts.vault.key,
+              ctx.accounts.user.key,
+              amount,
+          ),
+          &[ctx.accounts.vault.to_account_info(), ctx.accounts.user.to_account_info()],
+      )?;
+  
+      // 3. Update Balance (Too late! Re-entrant call sees old balance)
+      ctx.accounts.vault.balance -= amount;
+      
+      Ok(())
+  }
+secure_code: |
+  pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+      // ✅ SECURE: Checks-Effects-Interactions Pattern
+      
+      // 1. CHECKS: Verify the request is valid
+      require!(
+          ctx.accounts.vault.balance >= amount,
+          ErrorCode::InsufficientFunds
+      );
+  
+      // 2. EFFECTS: Update state FIRST ✅
+      // Re-entrant calls will now see the updated (lower) balance
+      ctx.accounts.vault.balance -= amount;
+  
+      // 3. INTERACTIONS: Now safe to call external programs 🚀
+      anchor_lang::solana_program::program::invoke(
+          &system_instruction::transfer(
+              ctx.accounts.vault.key,
+              ctx.accounts.user.key,
+              amount,
+          ),
+          &[ctx.accounts.vault.to_account_info(), ctx.accounts.user.to_account_info()],
+      )?;
+      
+      Ok(())
+  }
 ---
 
 ## 📖 The Scenario
@@ -28,50 +89,8 @@ If that other program (the "customer") is malicious, it can call **back** into y
 </div>
 
 ## ⚔️ The Exploit
-### Vulnerable vs Secure
 
-{% capture vulnerable_desc %}
-**Interactions BEFORE Effects**: The program gives the money *before* updating its own records.
-{% endcapture %}
-
-{% capture vulnerable_code %}
-pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    // 1. Check Balance
-    if ctx.accounts.vault.balance < amount { ... }
-
-    // 2. Transfer (CPI) - DANGER ZONE 🚨
-    // Control hands over to 'to' account here!
-    anchor_lang::solana_program::program::invoke(...)
-
-    // 3. Update Balance (Too late!)
-    ctx.accounts.vault.balance -= amount;
-}
-{% endcapture %}
-
-{% capture secure_desc %}
-**Checks-Effects-Interactions**: The program updates its records *before* handing over any money.
-{% endcapture %}
-
-{% capture secure_code %}
-pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    // 1. Check Balance
-    if ctx.accounts.vault.balance < amount { ... }
-
-    // 2. Update Balance - EFFECT ✅
-    // Re-entrant calls will see this new lower balance
-    ctx.accounts.vault.balance -= amount;
-
-    // 3. Transfer (CPI) - INTERACTION 🚀
-    anchor_lang::solana_program::program::invoke(...)
-}
-{% endcapture %}
-
-{% include comparison-card.html 
-   vulnerable_desc=vulnerable_desc 
-   vulnerable_code=vulnerable_code 
-   secure_desc=secure_desc 
-   secure_code=secure_code 
-%}
+{% include code-compare.html %}
 
 ## 🧠 Mental Model: The Ledger First
 Always behave like a paranoid accountant.
