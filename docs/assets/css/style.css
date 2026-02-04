@@ -1,22 +1,22 @@
 /* 
- * Solana Security Cookbook - Sophisticated Dark Theme
+ * Solana Security Cookbook - Professional Light Theme
  * Educational Authority Design
  */
 
 :root {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-tertiary: #334155;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
 
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --text-accent: #9945FF;
+    --text-primary: #1a202c;
+    --text-secondary: #4a5568;
+    --text-accent: #7c3aed;
 
     --accent-solana: #14f195;
-    --accent-purple: #9945FF;
+    --accent-purple: #7c3aed;
 
-    --status-secure: #22c55e;
-    --status-vuln: #ef4444;
+    --status-secure: #059669;
+    --status-vuln: #dc2626;
 
     --font-body: 'Inter', system-ui, -apple-system, sans-serif;
     --font-heading: 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -25,6 +25,11 @@
     --container-width: 1000px;
     --radius-sm: 6px;
     --radius-md: 12px;
+
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 /* Global Reset */
@@ -52,7 +57,8 @@ a {
 }
 
 a:hover {
-    color: var(--accent-solana);
+    color: #6d28d9;
+    text-decoration: underline;
 }
 
 .wrapper {
@@ -79,17 +85,14 @@ h6 {
 h1 {
     font-size: 2.5rem;
     letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #1a202c;
     margin-bottom: 2rem;
 }
 
 h2 {
     font-size: 1.75rem;
     margin-top: 3rem;
-    border-bottom: 1px solid var(--bg-secondary);
+    border-bottom: 2px solid var(--border-color);
     padding-bottom: 0.5rem;
 }
 
@@ -100,42 +103,44 @@ h3 {
 
 p {
     margin-bottom: 1.5rem;
-    color: #e2e8f0;
+    color: var(--text-primary);
 }
 
 code {
-    background: rgba(30, 41, 59, 0.5);
+    background: #f1f5f9;
     padding: 0.2em 0.4em;
     border-radius: 4px;
     font-family: var(--font-mono);
     font-size: 0.9em;
-    color: var(--accent-solana);
+    color: #dc2626;
+    border: 1px solid #e2e8f0;
 }
 
 pre {
-    background: var(--bg-secondary);
+    background: #f8f9fa;
     padding: 1.5rem;
     border-radius: var(--radius-md);
     overflow-x: auto;
-    border: 1px solid var(--bg-tertiary);
+    border: 1px solid var(--border-color);
 }
 
 pre code {
     background: none;
     padding: 0;
-    color: inherit;
+    color: #1a202c;
     font-size: 0.95em;
+    border: none;
 }
 
 /* Header */
 header.site-header {
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--bg-tertiary);
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color);
     position: sticky;
     top: 0;
     z-index: 100;
     padding: 1rem 0;
+    box-shadow: var(--shadow-sm);
 }
 
 .nav-container {
@@ -155,7 +160,8 @@ header.site-header {
 }
 
 .site-title:hover {
-    color: var(--text-primary);
+    color: var(--accent-purple);
+    text-decoration: none;
 }
 
 .logo-icon {
@@ -175,7 +181,8 @@ header.site-header {
 
 .nav-link:hover,
 .nav-link.active {
-    color: var(--text-primary);
+    color: var(--accent-purple);
+    text-decoration: none;
 }
 
 /* Main Content */
@@ -187,7 +194,7 @@ main.page-content {
 /* Footer */
 footer.site-footer {
     background: var(--bg-secondary);
-    border-top: 1px solid var(--bg-tertiary);
+    border-top: 1px solid var(--border-color);
     padding: 4rem 0 2rem;
     margin-top: auto;
 }
@@ -204,6 +211,7 @@ footer.site-footer {
     font-size: 1.1rem;
     display: block;
     margin-bottom: 1rem;
+    color: var(--text-primary);
 }
 
 .footer-heading {
@@ -245,19 +253,20 @@ footer.site-footer {
 
 /* Dashboard Card */
 .dashboard-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--bg-tertiary);
+    background: #ffffff;
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     display: flex;
     flex-direction: column;
     padding: 1.5rem;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     margin: 0;
+    box-shadow: var(--shadow-sm);
 }
 
 .dashboard-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-lg);
     border-color: var(--accent-purple);
 }
 
@@ -278,21 +287,21 @@ footer.site-footer {
 }
 
 .risk-badge.high {
-    background: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
 }
 
 .risk-badge.medium {
-    background: rgba(245, 158, 11, 0.2);
-    color: #fcd34d;
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
 }
 
 .risk-badge.low {
-    background: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
 }
 
 .risk-badge.unknown {
@@ -320,7 +329,8 @@ footer.site-footer {
 }
 
 .card-content h3 a:hover {
-    color: var(--text-primary);
+    color: var(--accent-purple);
+    text-decoration: none;
 }
 
 .card-content p {
@@ -334,7 +344,7 @@ footer.site-footer {
     justify-content: space-between;
     align-items: center;
     margin-top: auto;
-    border-top: 1px solid var(--bg-tertiary);
+    border-top: 1px solid var(--border-color);
     padding-top: 1rem;
 }
 
@@ -347,9 +357,10 @@ footer.site-footer {
 .tech-tag {
     font-size: 0.7rem;
     padding: 0.2rem 0.5rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-secondary);
     border-radius: 4px;
     color: var(--text-secondary);
+    border: 1px solid var(--border-color);
 }
 
 .learn-more {
@@ -359,7 +370,7 @@ footer.site-footer {
 }
 
 .learn-more:hover {
-    color: var(--accent-solana);
+    color: #6d28d9;
     text-decoration: underline;
 }
 
@@ -382,12 +393,13 @@ footer.site-footer {
     padding: 0.25rem 0.75rem;
     border-radius: 4px;
     font-size: 0.8rem;
+    border: 1px solid var(--border-color);
 }
 
 /* Hero Summary */
 .hero-summary {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 1) 0%, rgba(30, 41, 59, 1) 100%);
-    border: 1px solid var(--accent-purple);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid var(--accent-purple);
     border-radius: var(--radius-md);
     padding: 2rem;
     margin-bottom: 2rem;
@@ -428,7 +440,8 @@ footer.site-footer {
     padding: 2rem;
     background: white;
     border-radius: var(--radius-md);
-    border: 1px solid var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
 }
 
 .auto-diagram img {
@@ -466,7 +479,7 @@ footer.site-footer {
 }
 
 .code-window {
-    background: #1e1e1e;
+    background: #f8f9fa;
     padding: 1rem;
     border-radius: 0 0 var(--radius-md) var(--radius-md);
     overflow-x: auto;
@@ -482,37 +495,37 @@ footer.site-footer {
 }
 
 .vuln-col .code-header {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
     border-bottom: none;
 }
 
 .vuln-col .code-header span.label {
-    color: #fca5a5;
+    color: #991b1b;
 }
 
 .vuln-col .code-window {
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid #fca5a5;
     border-top: none;
 }
 
 .secure-col .code-header {
-    background: rgba(34, 197, 94, 0.1);
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    background: #d1fae5;
+    border: 1px solid #6ee7b7;
     border-bottom: none;
 }
 
 .secure-col .code-header span.label {
-    color: #86efac;
+    color: #065f46;
 }
 
 .secure-col .code-window {
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    border: 1px solid #6ee7b7;
     border-top: none;
 }
 
 .badge-bad {
-    background: #ef4444;
+    background: #dc2626;
     color: white;
     font-size: 0.7rem;
     font-weight: 700;
@@ -521,7 +534,7 @@ footer.site-footer {
 }
 
 .badge-good {
-    background: #22c55e;
+    background: #059669;
     color: white;
     font-size: 0.7rem;
     font-weight: 700;
@@ -531,12 +544,12 @@ footer.site-footer {
 
 /* Security Cards (for comparison-card.html) */
 .security-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--bg-tertiary);
+    background: #ffffff;
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 2rem;
     margin: 2rem 0;
-    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-md);
 }
 
 .comparison-grid {
@@ -548,14 +561,14 @@ footer.site-footer {
 
 .vuln-block {
     border-left: 4px solid var(--status-vuln);
-    background: rgba(239, 68, 68, 0.05);
+    background: #fee2e2;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
     padding: 1rem;
 }
 
 .secure-block {
     border-left: 4px solid var(--status-secure);
-    background: rgba(34, 197, 94, 0.05);
+    background: #d1fae5;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
     padding: 1rem;
 }
@@ -566,10 +579,11 @@ footer.site-footer {
     padding: 1.5rem;
     margin: 2rem 0;
     text-align: center;
+    border: 1px solid var(--border-color);
 }
 
 blockquote {
-    border-left: 4px solid var(--bg-tertiary);
+    border-left: 4px solid var(--border-color);
     padding-left: 1rem;
     color: var(--text-secondary);
     font-style: italic;
@@ -578,7 +592,7 @@ blockquote {
 
 blockquote.pro-tip {
     border-left: 4px solid var(--accent-purple);
-    background: rgba(153, 69, 255, 0.08);
+    background: #f5f3ff;
     color: var(--text-primary);
     padding: 1.5rem;
     margin: 2.5rem 0;
@@ -607,20 +621,22 @@ blockquote.pro-tip strong {
 }
 
 .btn-primary:hover {
-    background: #8b3dff;
+    background: #6d28d9;
     color: white;
     transform: translateY(-1px);
+    text-decoration: none;
 }
 
 .btn-secondary {
     background: transparent;
-    border: 1px solid var(--bg-tertiary);
+    border: 1px solid var(--border-color);
     color: var(--text-primary);
 }
 
 .btn-secondary:hover {
-    border-color: var(--text-primary);
-    color: var(--text-primary);
+    border-color: var(--accent-purple);
+    color: var(--accent-purple);
+    text-decoration: none;
 }
 
 .cta-buttons {
@@ -640,7 +656,7 @@ th,
 td {
     padding: 0.75rem;
     text-align: left;
-    border-bottom: 1px solid var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 th {
