@@ -54,33 +54,28 @@
 
 
         <div class="post-content e-content" itemprop="articleBody">
-  {% if page.impact or page.recommendation %}
-  <div class="impact-grid"
-    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-    {% if page.impact %}
-    <div class="impact-box"
-      style="background: rgba(239, 68, 68, 0.05); border-left: 4px solid #ef4444; padding: 1rem; border-radius: 0 8px 8px 0;">
-      <h4 style="color: #ef4444; margin-top: 0; margin-bottom: 0.5rem;">💥 Impact</h4>
-      <p style="margin: 0; font-size: 0.95rem;">{{ page.impact }}</p>
-    </div>
-    {% endif %}
-    {% if page.recommendation %}
-    <div class="rec-box"
-      style="background: rgba(34, 197, 94, 0.05); border-left: 4px solid #22c55e; padding: 1rem; border-radius: 0 8px 8px 0;">
-      <h4 style="color: #22c55e; margin-top: 0; margin-bottom: 0.5rem;">🛡️ Recommendation</h4>
-      <p style="margin: 0; font-size: 0.95rem;">{{ page.recommendation }}</p>
-    </div>
-    {% endif %}
-  </div>
-  {% endif %}
+          {% if page.impact or page.recommendation %}
+          <div class="impact-grid"
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            {% if page.impact %}
+            <div class="impact-box"
+              style="background: rgba(239, 68, 68, 0.05); border-left: 4px solid #ef4444; padding: 1rem; border-radius: 0 8px 8px 0;">
+              <h4 style="color: #ef4444; margin-top: 0; margin-bottom: 0.5rem;">💥 Impact</h4>
+              <p style="margin: 0; font-size: 0.95rem;">{{ page.impact }}</p>
+            </div>
+            {% endif %}
+            {% if page.recommendation %}
+            <div class="rec-box"
+              style="background: rgba(34, 197, 94, 0.05); border-left: 4px solid #22c55e; padding: 1rem; border-radius: 0 8px 8px 0;">
+              <h4 style="color: #22c55e; margin-top: 0; margin-bottom: 0.5rem;">🛡️ Recommendation</h4>
+              <p style="margin: 0; font-size: 0.95rem;">{{ page.recommendation }}</p>
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
 
-  {% if page.vulnerable_code and page.secure_code %}
-  {% include code-compare.html %}
-  <h2>Technical Nuances & Deep Dive</h2>
-  {% endif %}
-
-  {{ content }}
-</div>
+          {{ content }}
+        </div>
         <!-- Security Lab Footer -->
         <div class="security-footer">
           <hr>
