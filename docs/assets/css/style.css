@@ -457,13 +457,18 @@ footer.site-footer {
 /* Main wrapper for side-by-side comparison */
 .comparison-wrapper {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.5rem;
     margin: 2.5rem 0;
     width: 100%;
     max-width: 100%;
     align-items: start;
     /* Ensures both columns start at the same height */
+}
+
+
+.comparison-wrapper > * {
+    min-width: 0;
 }
 
 /* Individual column */
@@ -476,7 +481,7 @@ footer.site-footer {
     /* Ensures column doesn't exceed grid bounds */
     background: #ffffff;
     border-radius: var(--radius-md);
-    overflow: hidden;
+    overflow: clip;
     box-shadow: var(--shadow-md);
     height: 100%;
     /* Makes both columns equal height */
@@ -865,7 +870,7 @@ li {
    ============================================ */
 
 /* Tablets and below - Stack code comparisons */
-@media (max-width: 1024px) {
+@media (max-width: 1100px) {
 
     .comparison-wrapper,
     .comparison-grid,

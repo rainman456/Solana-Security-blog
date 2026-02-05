@@ -8,7 +8,7 @@
                 <div class="desc-content">{{ include.vulnerable_desc | markdownify }}</div>
             </div>
             <div class="code-block">
-                <pre><code class="language-rust">{{ include.vulnerable_code | strip }}</code></pre>
+                <pre><code class="language-rust">{{ include.vulnerable_code | strip | escape }}</code></pre>
             </div>
         </div>
         
@@ -20,7 +20,7 @@
                 <div class="desc-content">{{ include.secure_desc | markdownify }}</div>
             </div>
             <div class="code-block">
-                <pre><code class="language-rust">{{ include.secure_code | strip }}</code></pre>
+                <pre><code class="language-rust">{{ include.secure_code | strip | escape }}</code></pre>
             </div>
         </div>
     </div>
