@@ -12,7 +12,7 @@
             <span class="badge-bad">VULNERABLE</span>
         </div>
         <div class="code-window">
-            <pre><code class="language-rust">{{ bad_content | strip }}</code></pre>
+            <pre><code class="language-rust">{{ bad_content | strip | escape }}</code></pre>
         </div>
     </div>
 
@@ -23,7 +23,7 @@
             <span class="badge-good">SECURE</span>
         </div>
         <div class="code-window">
-            <pre><code class="language-rust">{{ good_content | strip }}</code></pre>
+            <pre><code class="language-rust">{{ good_content | strip | escape }}</code></pre>
         </div>
     </div>
 </div>
