@@ -461,17 +461,25 @@ footer.site-footer {
     gap: 1.5rem;
     margin: 2.5rem 0;
     width: 100%;
+    max-width: 100%;
+    align-items: start;
+    /* Ensures both columns start at the same height */
 }
 
 /* Individual column */
 .code-col {
     display: flex;
     flex-direction: column;
-    min-width: 0; /* Prevents overflow */
+    min-width: 0;
+    /* Prevents overflow */
+    max-width: 100%;
+    /* Ensures column doesn't exceed grid bounds */
     background: #ffffff;
     border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow: var(--shadow-md);
+    height: 100%;
+    /* Makes both columns equal height */
 }
 
 /* Header for each column */
@@ -536,7 +544,12 @@ footer.site-footer {
     background: #f8f9fa;
     padding: 1.5rem;
     overflow-x: auto;
+    overflow-y: auto;
     flex-grow: 1;
+    max-width: 100%;
+    min-width: 0;
+    max-height: 600px;
+    /* Prevents excessively tall code blocks */
 }
 
 .code-window pre {
@@ -545,6 +558,8 @@ footer.site-footer {
     margin: 0;
     border: none;
     overflow-x: auto;
+    max-width: 100%;
+    width: 100%;
 }
 
 .code-window pre code {
@@ -557,6 +572,9 @@ footer.site-footer {
     padding: 0;
     display: block;
     white-space: pre;
+    overflow-wrap: normal;
+    word-break: normal;
+    max-width: 100%;
 }
 
 /* Vulnerable code window border */
@@ -848,17 +866,18 @@ li {
 
 /* Tablets and below - Stack code comparisons */
 @media (max-width: 1024px) {
+
     .comparison-wrapper,
     .comparison-grid,
     .impact-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
-    
+
     .code-col {
         margin-bottom: 1.5rem;
     }
-    
+
     :root {
         --container-width: 100%;
     }
@@ -882,15 +901,15 @@ li {
     .vulnerability-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .wrapper {
         padding: 0 1rem;
     }
-    
+
     .code-window {
         padding: 1rem;
     }
-    
+
     .code-window pre code {
         font-size: 0.8rem;
     }
@@ -901,15 +920,15 @@ li {
     h1 {
         font-size: 1.75rem;
     }
-    
+
     h2 {
         font-size: 1.25rem;
     }
-    
+
     .hero-summary {
         padding: 1.5rem;
     }
-    
+
     .code-header {
         padding: 0.5rem 0.75rem;
         flex-direction: column;
