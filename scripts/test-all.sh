@@ -1,44 +1,52 @@
  docs/docs/deep-dive-01-missing-signer.md
  examples/01-missing-signer-check/tests/anchor/exploit.ts
  examples/01-missing-signer-check/tests/anchor/verify.ts
- examples/01-missing-signer-check/tests/exploit.ts
+
  examples/01-missing-signer-check/tests/pinocchio/exploit.ts
  examples/01-missing-signer-check/tests/pinocchio/verify.ts
- examples/01-missing-signer-check/tests/verify.ts
- examples/02-incorrect-pda-validation/anchor/secure/src/lib.rs
+
  examples/02-incorrect-pda-validation/tests/anchor/exploit.ts
  examples/02-incorrect-pda-validation/tests/anchor/verify.ts
- examples/02-incorrect-pda-validation/tests/exploit.ts
+
  examples/02-incorrect-pda-validation/tests/pinocchio/exploit.ts
  examples/02-incorrect-pda-validation/tests/pinocchio/verify.ts
- examples/02-incorrect-pda-validation/tests/verify.ts
- examples/03-arithmetic-overflow/anchor/secure/src/lib.rs
- examples/03-arithmetic-overflow/anchor/vulnerable/programs/vulnerable/src/lib.rs
+
+s
  examples/03-arithmetic-overflow/tests/anchor/exploit.ts
  examples/03-arithmetic-overflow/tests/anchor/verify.ts
- examples/03-arithmetic-overflow/tests/exploit.ts
+
+
  examples/03-arithmetic-overflow/tests/pinocchio/exploit.ts
  examples/03-arithmetic-overflow/tests/pinocchio/verify.ts
- examples/03-arithmetic-overflow/tests/verify.ts
- examples/04-reentrancy-risk/anchor/secure/src/lib.rs
+
+
+
  examples/04-reentrancy-risk/tests/anchor/exploit.ts
  examples/04-reentrancy-risk/tests/anchor/verify.ts
+
  examples/04-reentrancy-risk/tests/pinocchio/exploit.ts
  examples/04-reentrancy-risk/tests/pinocchio/verify.ts
- examples/05-unsafe-account-closure/anchor/secure/src/lib.rs
+
  examples/05-unsafe-account-closure/tests/anchor/exploit.ts
  examples/05-unsafe-account-closure/tests/anchor/verify.ts
+
  examples/05-unsafe-account-closure/tests/pinocchio/exploit.ts
  examples/05-unsafe-account-closure/tests/pinocchio/verify.ts
+
  examples/06-missing-mint-validation/tests/anchor/exploit.ts
  examples/06-missing-mint-validation/tests/anchor/verify.ts
+
  examples/06-missing-mint-validation/tests/pinocchio/exploit.ts
  examples/06-missing-mint-validation/tests/pinocchio/verify.ts
+
  examples/07-arbitrary-cpi-validation/tests/anchor/exploit.ts
  examples/07-arbitrary-cpi-validation/tests/anchor/verify.ts
+
  examples/07-arbitrary-cpi-validation/tests/pinocchio/exploit.ts
  examples/07-arbitrary-cpi-validation/tests/pinocchio/verify.ts
+
  examples/08-toctou-race-condition/tests/anchor/exploit.ts
  examples/08-toctou-race-condition/tests/anchor/verify.ts
+ 
  examples/08-toctou-race-condition/tests/pinocchio/exploit.ts
  examples/08-toctou-race-condition/tests/pinocchio/verify.ts
