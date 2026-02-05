@@ -18,7 +18,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ " /assets/css/style.css" | relative_url }}">
+    <link rel="stylesheet" href="{{ "/assets/css/style.css" | relative_url }}">
 </head>
 
 <body>
@@ -26,12 +26,12 @@
     <!-- "Shell": Minimal Header -->
     <header class="site-header">
         <div class="wrapper nav-container">
-            <a class="site-title" href="{{ " /" | relative_url }}">
+            <a class="site-title" href="{{ "/" | relative_url }}">
                 <span class="logo-icon">🛡️</span> {{ site.title | escape }}
             </a>
 
             <nav class="site-nav">
-                <a href="{{ " /" | relative_url }}" class="nav-link {% if page.url == '/' %}active{% endif %}">Home</a>
+                <a href="{{ "/" | relative_url }}" class="nav-link {% if page.url == '/' %}active{% endif %}">Home</a>
                 <a href="https://github.com/solana-labs" target="_blank" class="nav-link">GitHub</a>
             </nav>
         </div>
