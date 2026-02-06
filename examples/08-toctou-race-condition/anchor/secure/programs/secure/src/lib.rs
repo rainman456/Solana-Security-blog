@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, TokenAccount};
 
-declare_id!("SECU8toctouVa11d1d1d1d1d1d1d1d1d1d1d1d1d1");
+declare_id!("11111111111111111111111111111111");
 
 #[account]
 pub struct Vault {
@@ -38,19 +38,21 @@ pub mod secure_toctou {
     use super::*;
 
     pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-        let vault = &mut ctx.accounts.vault;
         let vault_ta = &ctx.accounts.vault_token_account;
         
-        // FIX: Reentrancy guard - prevent reentrant calls
-        require!(!vault.locked, VaultError::ReentrancyBlocked);
-        vault.locked = true;
-        
-        // FIX: Checks-Effects-Interactions pattern
-        // 1. CHECK: Verify sufficient balance
-        require!(vault_ta.amount >= amount, VaultError::InsufficientFunds);
-        
-        // 2. EFFECTS: Update state BEFORE any external calls
-        vault.total_deposits = vault.total_deposits.checked_sub(amount).unwrap();
+        {
+            let vault = &mut ctx.accounts.vault;
+            // FIX: Reentrancy guard - prevent reentrant calls
+            require!(!vault.locked, VaultError::ReentrancyBlocked);
+            vault.locked = true;
+            
+            // FIX: Checks-Effects-Interactions pattern
+            // 1. CHECK: Verify sufficient balance
+            require!(vault_ta.amount >= amount, VaultError::InsufficientFunds);
+            
+            // 2. EFFECTS: Update state BEFORE any external calls
+            vault.total_deposits = vault.total_deposits.checked_sub(amount).unwrap();
+        }
         
         // 3. INTERACTIONS: Perform CPI AFTER state update
         // Reentrant call now sees updated accounting and cannot exploit
@@ -67,7 +69,7 @@ pub mod secure_toctou {
         )?;
         
         // Release reentrancy guard
-        vault.locked = false;
+        ctx.accounts.vault.locked = false;
         
         Ok(())
     }

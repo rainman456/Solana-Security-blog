@@ -72,15 +72,19 @@ fn process_initialize(
     }
 
     let seeds = &[b"vault", user.address().as_ref()];
-    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let program_id_bytes: [u8; 32] = program_id
+        .as_ref()
+        .try_into()
+        .map_err(|_| ProgramError::InvalidAccountData)?;
+    let program_id_pubkey = Pubkey::new_from_array(program_id_bytes);
     let (pda, _bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
 
-    if pda.to_bytes() != *vault.address().as_ref() {
+    if pda.to_bytes().as_ref() != vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
     unsafe {
-        let data = vault.borrow_mut_data_unchecked();
+        let data = vault.borrow_unchecked_mut();
         if data.len() < VAULT_SIZE {
             return Err(ProgramError::InvalidAccountData);
         }
@@ -107,10 +111,14 @@ fn process_deposit(
     }
 
     let seeds = &[b"vault", user.address().as_ref()];
-    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let program_id_bytes: [u8; 32] = program_id
+        .as_ref()
+        .try_into()
+        .map_err(|_| ProgramError::InvalidAccountData)?;
+    let program_id_pubkey = Pubkey::new_from_array(program_id_bytes);
     let (pda, _bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
     
-    if pda.to_bytes() != *vault.address().as_ref() {
+    if pda.to_bytes().as_ref() != vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
@@ -120,7 +128,7 @@ fn process_deposit(
             .map_err(|_| ProgramError::InvalidInstructionData)?
     );
 
-    let vault_data = unsafe { vault.borrow_data_unchecked() };
+    let vault_data = unsafe { vault.borrow_unchecked() };
     let old_balance = get_balance(&vault_data)?;
     drop(vault_data);
 
@@ -129,7 +137,7 @@ fn process_deposit(
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     unsafe {
-        let mut vault_data = vault.borrow_mut_data_unchecked();
+        let mut vault_data = vault.borrow_unchecked_mut();
         set_balance(&mut vault_data, new_balance)?;
     }
 
@@ -181,15 +189,19 @@ fn process_close(
     }
 
     let seeds = &[b"vault", user.address().as_ref()];
-    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let program_id_bytes: [u8; 32] = program_id
+        .as_ref()
+        .try_into()
+        .map_err(|_| ProgramError::InvalidAccountData)?;
+    let program_id_pubkey = Pubkey::new_from_array(program_id_bytes);
     let (pda, bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
 
-    if pda.to_bytes() != *vault.address().as_ref() {
+    if pda.to_bytes().as_ref() != vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
     // Verify ownership
-    let vault_data = unsafe { vault.borrow_data_unchecked() };
+    let vault_data = unsafe { vault.borrow_unchecked() };
     let owner = get_owner(&vault_data)?;
     if owner != user.address().as_ref() {
         return Err(ProgramError::IllegalOwner);
@@ -204,7 +216,7 @@ fn process_close(
     // This prevents data from being readable after closure
     // Even if subsequent steps fail, data is already wiped
     unsafe {
-        let mut vault_data = vault.borrow_mut_data_unchecked();
+        let vault_data = vault.borrow_unchecked_mut();
         // Zero the entire data section
         for byte in vault_data.iter_mut() {
             *byte = 0;
@@ -215,24 +227,22 @@ fn process_close(
     // STEP 3: INTERACTIONS - Transfer all lamports
     // ═══════════════════════════════════════════════════════════════
     
+    let bump_seed = [bump];
     let signer_seeds = &[
         pinocchio::cpi::Seed::from(b"vault" as &[u8]),
         pinocchio::cpi::Seed::from(user.address().as_ref()),
-        pinocchio::cpi::Seed::from(&[bump]),
+        pinocchio::cpi::Seed::from(&bump_seed),
     ];
-    let pda_signer = Signer::from(&signer_seeds[..]);
-
     // ✅ Transfer ALL lamports to user
     // This includes both deposited funds and rent
-    let vault_lamports = unsafe { 
-        vault.borrow_lamports_unchecked()
-    };
+    let vault_lamports = vault.lamports();
     
     Transfer {
         from: vault,
         to: user,
         lamports: vault_lamports,
-    }.invoke_signed(&[pda_signer])?;
+    }
+    .invoke_signed(&[Signer::from(&signer_seeds[..])])?;
 
     // ═══════════════════════════════════════════════════════════════
     // STEP 4: CLEANUP - Reassign owner to System Program
@@ -244,12 +254,13 @@ fn process_close(
     // - Account can only be used for basic SOL transfers
     // - Cannot be treated as a program account anymore
     // - Prevents revival attacks
-    let system_program_address = Address::from(&SYSTEM_PROGRAM_ID);
+    let system_program_address = Address::from(SYSTEM_PROGRAM_ID);
     
     Assign {
         account: vault,
         owner: &system_program_address,
-    }.invoke_signed(&[pda_signer])?;
+    }
+    .invoke_signed(&[Signer::from(&signer_seeds[..])])?;
 
     // After this function:
     // ✅ Lamports = 0 (all transferred to user)

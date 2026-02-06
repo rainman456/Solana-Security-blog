@@ -44,10 +44,14 @@ fn process_initialize(
 
     // Derive PDA to verify vault address
     let seeds = &[b"vault", user.address().as_ref()];
-    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let program_id_bytes: [u8; 32] = program_id
+        .as_ref()
+        .try_into()
+        .map_err(|_| ProgramError::InvalidAccountData)?;
+    let program_id_pubkey = Pubkey::new_from_array(program_id_bytes);
     let (pda, _bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
 
-    if pda.to_bytes() != *vault.address().as_ref() {
+    if pda.to_bytes().as_ref() != vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
     
@@ -70,10 +74,14 @@ fn process_deposit(
     }
 
     let seeds = &[b"vault", user.address().as_ref()];
-    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let program_id_bytes: [u8; 32] = program_id
+        .as_ref()
+        .try_into()
+        .map_err(|_| ProgramError::InvalidAccountData)?;
+    let program_id_pubkey = Pubkey::new_from_array(program_id_bytes);
     let (pda, _bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
     
-    if pda.to_bytes() != *vault.address().as_ref() {
+    if pda.to_bytes().as_ref() != vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
@@ -128,21 +136,26 @@ fn process_withdraw(
     // ✅ SECURE: Validate PDA derivation
     // This ensures the vault account belongs to the user
     let seeds = &[b"vault", user.address().as_ref()];
-    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let program_id_bytes: [u8; 32] = program_id
+        .as_ref()
+        .try_into()
+        .map_err(|_| ProgramError::InvalidAccountData)?;
+    let program_id_pubkey = Pubkey::new_from_array(program_id_bytes);
     let (pda, bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
 
     // ✅ CRITICAL SECURITY CHECK: Verify vault matches derived PDA
     // If vault doesn't match, transaction fails
     // This prevents users from accessing other users' vaults
-    if pda.to_bytes() != *vault.address().as_ref() {
+    if pda.to_bytes().as_ref() != vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
     // Now it's safe to sign and transfer
+    let bump_seed = [bump];
     let signer_seeds = &[
         pinocchio::cpi::Seed::from(b"vault" as &[u8]),
         pinocchio::cpi::Seed::from(user.address().as_ref()),
-        pinocchio::cpi::Seed::from(&[bump]),
+        pinocchio::cpi::Seed::from(&bump_seed),
     ];
     let pda_signer = Signer::from(&signer_seeds[..]);
 

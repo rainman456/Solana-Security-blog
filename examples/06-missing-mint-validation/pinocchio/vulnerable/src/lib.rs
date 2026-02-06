@@ -1,13 +1,13 @@
 use pinocchio::{
     entrypoint,
-    program::invoke_signed,
     AccountView,
     Address,
     ProgramResult,
     cpi::Signer,
     error::ProgramError,
 };
-use pinocchio_token::instructions::Transfer;
+use pinocchio::instruction::InstructionAccount;
+use pinocchio::instruction::InstructionView;
 
 // Replace with actual program ID
 const PROGRAM_ID: [u8; 32] = [0u8; 32];
@@ -52,8 +52,8 @@ fn initialize_vault(accounts: &[AccountView]) -> ProgramResult {
 
     let payer = &accounts[0];
     let vault = &accounts[1];
-    let token_mint = &accounts[2];
-    let system_program = &accounts[3];
+    let _token_mint = &accounts[2];
+    let _system_program = &accounts[3];
 
     if !payer.is_signer() || !payer.is_writable() || !vault.is_writable() {
         return Err(ProgramError::InvalidAccountData);
@@ -67,27 +67,27 @@ fn initialize_vault(accounts: &[AccountView]) -> ProgramResult {
 
 // Helper to extract mint from token account (offset 0..32 per SPL token spec)
 fn get_token_account_mint(account: &AccountView) -> Result<Address, ProgramError> {
-    let data = account.data();
+    let data = unsafe { account.borrow_unchecked() };
     if data.len() < 32 {
         return Err(ProgramError::InvalidAccountData);
     }
     let mint_bytes: [u8; 32] = data[0..32].try_into().map_err(|_| ProgramError::InvalidAccountData)?;
-    Ok(Address::new(mint_bytes))
+    Ok(Address::new_from_array(mint_bytes))
 }
 
 // Helper to extract mint from vault state (offset 8..40 after 8-byte discriminator)
 fn get_vault_mint(vault: &AccountView) -> Result<Address, ProgramError> {
-    let data = vault.data();
+    let data = unsafe { vault.borrow_unchecked() };
     if data.len() < 40 {
         return Err(ProgramError::InvalidAccountData);
     }
     let mint_bytes: [u8; 32] = data[8..40].try_into().map_err(|_| ProgramError::InvalidAccountData)?;
-    Ok(Address::new(mint_bytes))
+    Ok(Address::new_from_array(mint_bytes))
 }
 
 // Helper to extract bump from vault state (offset 40)
 fn get_vault_bump(vault: &AccountView) -> Result<u8, ProgramError> {
-    let data = vault.data();
+    let data = unsafe { vault.borrow_unchecked() };
     if data.len() < 41 {
         return Err(ProgramError::InvalidAccountData);
     }
@@ -107,7 +107,7 @@ fn deposit(accounts: &[AccountView], amount: u64) -> ProgramResult {
 
     let user = &accounts[0];
     let vault_token_account = &accounts[1];
-    let vault = &accounts[2];
+    let _vault = &accounts[2];
     let user_token_account = &accounts[3];
     let token_program = &accounts[4];
 
@@ -121,21 +121,23 @@ fn deposit(accounts: &[AccountView], amount: u64) -> ProgramResult {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    // Derive vault PDA seeds for signing
-    let vault_mint = get_vault_mint(vault)?;
-    let bump = get_vault_bump(vault)?;
-    let seeds: &[&[u8]] = &[VAULT_SEED, vault_mint.as_ref(), &[bump]];
-    let signer_seeds = &[Signer::from(seeds)];
+    let mut ix_data = [0u8; 9];
+    ix_data[0] = 3;
+    ix_data[1..].copy_from_slice(&amount.to_le_bytes());
+    let ix_accounts = [
+        InstructionAccount::writable(vault_token_account.address()),
+        InstructionAccount::writable(user_token_account.address()),
+        InstructionAccount::readonly_signer(user.address()),
+    ];
+    let ix = InstructionView {
+        program_id: token_program.address(),
+        data: &ix_data,
+        accounts: &ix_accounts,
+    };
 
     // VULNERABILITY: Transfer WITHOUT mint validation - EXPLOITABLE!
     // Attacker supplies fake mint token account but vault accepts it
-    Transfer {
-        from: user_token_account,
-        to: vault_token_account,
-        authority: user,
-        amount,
-    }
-    .invoke_signed(token_program, signer_seeds)?;
+    pinocchio::cpi::invoke_signed(&ix, &[vault_token_account, user_token_account, user], &[])?;
 
     Ok(())
 }
@@ -169,18 +171,31 @@ fn withdraw(accounts: &[AccountView], amount: u64) -> ProgramResult {
     // Derive vault PDA seeds for signing
     let vault_mint = get_vault_mint(vault)?;
     let bump = get_vault_bump(vault)?;
-    let seeds: &[&[u8]] = &[VAULT_SEED, vault_mint.as_ref(), &[bump]];
-    let signer_seeds = &[Signer::from(seeds)];
+    let bump_seed = [bump];
+    let signer_seeds = &[
+        pinocchio::cpi::Seed::from(VAULT_SEED),
+        pinocchio::cpi::Seed::from(vault_mint.as_ref()),
+        pinocchio::cpi::Seed::from(&bump_seed),
+    ];
+    let signer = Signer::from(signer_seeds);
+
+    let mut ix_data = [0u8; 9];
+    ix_data[0] = 3;
+    ix_data[1..].copy_from_slice(&amount.to_le_bytes());
+    let ix_accounts = [
+        InstructionAccount::writable(vault_token_account.address()),
+        InstructionAccount::writable(user_token_account.address()),
+        InstructionAccount::readonly_signer(vault.address()),
+    ];
+    let ix = InstructionView {
+        program_id: token_program.address(),
+        data: &ix_data,
+        accounts: &ix_accounts,
+    };
 
     // VULNERABILITY: Withdraw vault's valuable tokens using fake token balance
     // No validation that user_token_account.mint == vault.token_mint
-    Transfer {
-        from: vault_token_account,
-        to: user_token_account,
-        authority: vault,
-        amount,
-    }
-    .invoke_signed(token_program, signer_seeds)?;
+    pinocchio::cpi::invoke_signed(&ix, &[vault_token_account, user_token_account, vault], &[signer])?;
 
     Ok(())
 }

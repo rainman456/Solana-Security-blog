@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, TokenAccount};
 
-declare_id!("VULN8toctouVa11d1d1d1d1d1d1d1d1d1d1d1d1d1");
+declare_id!("11111111111111111111111111111111");
 
 #[account]
 pub struct Vault {
@@ -40,7 +40,6 @@ pub mod vulnerable_toctou {
     use super::*;
 
     pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-        let vault = &mut ctx.accounts.vault;
         let vault_ta = &ctx.accounts.vault_token_account;
         
         // TIME OF CHECK: Verify sufficient balance
@@ -48,9 +47,9 @@ pub mod vulnerable_toctou {
         
         // VULNERABILITY: CPI happens BEFORE state update
         // Malicious program re-enters here and drains remaining balance
-        if ctx.accounts.callback_program.key() != &Pubkey::default() {
+        if ctx.accounts.callback_program.key() != Pubkey::default() {
             // Simulate callback that enables reentrancy
-            let callback_accounts = vec![
+            let _callback_accounts = vec![
                 ctx.accounts.user.to_account_info(),
                 ctx.accounts.vault.to_account_info(),
                 ctx.accounts.vault_token_account.to_account_info(),
@@ -78,6 +77,7 @@ pub mod vulnerable_toctou {
         
         // TIME OF USE: Update accounting AFTER transfer
         // Too late! Reentrant call already drained additional funds
+        let vault = &mut ctx.accounts.vault;
         vault.total_deposits = vault.total_deposits.checked_sub(amount).unwrap();
         
         Ok(())
