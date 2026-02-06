@@ -1,0 +1,12 @@
+[package]
+name = "arbitrary-cpi-validation-pinocchio-vulnerable"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+pinocchio = { version = "0.10.1", features = ["cpi"] }
+pinocchio-system = "0.5.0"
+solana-program = "1.18.26"

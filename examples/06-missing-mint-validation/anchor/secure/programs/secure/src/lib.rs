@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
 
-declare_id!("SECU6mintVa11d1d1d1d1d1d1d1d1d1d1d1d1d1d1");
+declare_id!("11111111111111111111111111111111");
 
 #[account]
 pub struct Vault {

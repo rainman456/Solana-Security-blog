@@ -69,16 +69,20 @@ fn process_initialize(
     }
 
     let seeds = &[b"vault", user.address().as_ref()];
-    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let program_id_bytes: [u8; 32] = program_id
+        .as_ref()
+        .try_into()
+        .map_err(|_| ProgramError::InvalidAccountData)?;
+    let program_id_pubkey = Pubkey::new_from_array(program_id_bytes);
     let (pda, _bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
 
-    if pda.to_bytes() != *vault.address().as_ref() {
+    if pda.to_bytes().as_ref() != vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
     // Initialize vault data
     unsafe {
-        let data = vault.borrow_mut_data_unchecked();
+        let data = vault.borrow_unchecked_mut();
         if data.len() < VAULT_SIZE {
             return Err(ProgramError::InvalidAccountData);
         }
@@ -118,10 +122,14 @@ fn process_deposit(
     }
 
     let seeds = &[b"vault", user.address().as_ref()];
-    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let program_id_bytes: [u8; 32] = program_id
+        .as_ref()
+        .try_into()
+        .map_err(|_| ProgramError::InvalidAccountData)?;
+    let program_id_pubkey = Pubkey::new_from_array(program_id_bytes);
     let (pda, _bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
     
-    if pda.to_bytes() != *vault.address().as_ref() {
+    if pda.to_bytes().as_ref() != vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
@@ -132,7 +140,7 @@ fn process_deposit(
     );
 
     // Read current balance
-    let vault_data = unsafe { vault.borrow_data_unchecked() };
+    let vault_data = unsafe { vault.borrow_unchecked() };
     let old_balance = get_balance(&vault_data)?;
     drop(vault_data);
 
@@ -145,7 +153,7 @@ fn process_deposit(
 
     // Update balance in account data
     unsafe {
-        let mut vault_data = vault.borrow_mut_data_unchecked();
+        let mut vault_data = vault.borrow_unchecked_mut();
         set_balance(&mut vault_data, new_balance)?;
     }
 
@@ -191,15 +199,19 @@ fn process_withdraw(
     }
 
     let seeds = &[b"vault", user.address().as_ref()];
-    let program_id_pubkey = Pubkey::new_from_array(*program_id.as_ref());
+    let program_id_bytes: [u8; 32] = program_id
+        .as_ref()
+        .try_into()
+        .map_err(|_| ProgramError::InvalidAccountData)?;
+    let program_id_pubkey = Pubkey::new_from_array(program_id_bytes);
     let (pda, bump) = Pubkey::find_program_address(seeds, &program_id_pubkey);
 
-    if pda.to_bytes() != *vault.address().as_ref() {
+    if pda.to_bytes().as_ref() != vault.address().as_ref() {
         return Err(ProgramError::InvalidSeeds);
     }
 
     // Read current balance and verify ownership
-    let vault_data = unsafe { vault.borrow_data_unchecked() };
+    let vault_data = unsafe { vault.borrow_unchecked() };
     let owner = get_owner(&vault_data)?;
     if owner != user.address().as_ref() {
         return Err(ProgramError::IllegalOwner);
@@ -216,14 +228,15 @@ fn process_withdraw(
 
     // Update balance
     unsafe {
-        let mut vault_data = vault.borrow_mut_data_unchecked();
+        let mut vault_data = vault.borrow_unchecked_mut();
         set_balance(&mut vault_data, new_balance)?;
     }
 
+    let bump_seed = [bump];
     let signer_seeds = &[
         pinocchio::cpi::Seed::from(b"vault" as &[u8]),
         pinocchio::cpi::Seed::from(user.address().as_ref()),
-        pinocchio::cpi::Seed::from(&[bump]),
+        pinocchio::cpi::Seed::from(&bump_seed),
     ];
     let pda_signer = Signer::from(&signer_seeds[..]);
 

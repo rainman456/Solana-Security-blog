@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, TokenAccount};
 
-declare_id!("VULN7cpiVa11d1d1d1d1d1d1d1d1d1d1d1d1d1d1d");
+declare_id!("11111111111111111111111111111111");
 
 #[account]
 pub struct Vault {
@@ -49,7 +49,7 @@ pub mod vulnerable_cpi_validation {
             to: ctx.accounts.user_token_account.to_account_info(),
             authority: ctx.accounts.vault.to_account_info(), // Vault authority passed to attacker!
         };
-        let seeds = &[b"vault", &[ctx.accounts.vault.bump]];
+        let seeds: &[&[u8]] = &[b"vault".as_ref(), &[ctx.accounts.vault.bump]];
         let signer_seeds = &[&seeds[..]];
         
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);

@@ -1,13 +1,13 @@
 use pinocchio::{
     entrypoint,
-    program::invoke_signed,
     AccountView,
     Address,
     ProgramResult,
     cpi::Signer,
     error::ProgramError,
 };
-use pinocchio_token::instructions::Transfer;
+use pinocchio::instruction::InstructionAccount;
+use pinocchio::instruction::InstructionView;
 
 const PROGRAM_ID: [u8; 32] = [4u8; 32];
 const VAULT_SEED: &[u8] = b"vault";
@@ -17,7 +17,7 @@ entrypoint!(process_instruction);
 pub fn process_instruction(
     program_id: &Address,
     accounts: &[AccountView],
-     &[u8],
+    data: &[u8],
 ) -> ProgramResult {
     if program_id.as_ref() != &PROGRAM_ID {
         return Err(ProgramError::IncorrectProgramId);
@@ -75,16 +75,28 @@ fn withdraw(accounts: &[AccountView], amount: u64) -> ProgramResult {
 
     // Perform transfer
     let bump = get_vault_bump(vault)?;
-    let seeds: &[&[u8]] = &[VAULT_SEED, &[bump]];
-    let signer_seeds = &[Signer::from(seeds)];
+    let bump_seed = [bump];
+    let signer_seeds = &[
+        pinocchio::cpi::Seed::from(VAULT_SEED),
+        pinocchio::cpi::Seed::from(&bump_seed),
+    ];
+    let signer = Signer::from(signer_seeds);
 
-    Transfer {
-        from: vault_token_account,
-        to: user_token_account,
-        authority: vault,
-        amount,
-    }
-    .invoke_signed(token_program, signer_seeds)?;
+    let mut ix_data = [0u8; 9];
+    ix_data[0] = 3;
+    ix_data[1..].copy_from_slice(&amount.to_le_bytes());
+    let ix_accounts = [
+        InstructionAccount::writable(vault_token_account.address()),
+        InstructionAccount::writable(user_token_account.address()),
+        InstructionAccount::readonly_signer(vault.address()),
+    ];
+    let ix = InstructionView {
+        program_id: token_program.address(),
+        data: &ix_data,
+        accounts: &ix_accounts,
+    };
+
+    pinocchio::cpi::invoke_signed(&ix, &[vault_token_account, user_token_account, vault], &[signer])?;
 
     // TIME OF USE: Update state AFTER transfer - TOO LATE!
     // Reentrant call already exploited the gap
@@ -94,7 +106,7 @@ fn withdraw(accounts: &[AccountView], amount: u64) -> ProgramResult {
 }
 
 fn get_token_account_balance(account: &AccountView) -> Result<u64, ProgramError> {
-    let data = account.data();
+    let data = unsafe { account.borrow_unchecked() };
     if data.len() < 64 {
         return Err(ProgramError::InvalidAccountData);
     }
@@ -103,7 +115,7 @@ fn get_token_account_balance(account: &AccountView) -> Result<u64, ProgramError>
 }
 
 fn get_vault_bump(vault: &AccountView) -> Result<u8, ProgramError> {
-    let data = vault.data();
+    let data = unsafe { vault.borrow_unchecked() };
     if data.len() < 17 { // 8 discriminator + 8 balance + 1 bump
         return Err(ProgramError::InvalidAccountData);
     }

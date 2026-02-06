@@ -1,13 +1,13 @@
 use pinocchio::{
     entrypoint,
-    program::invoke_signed,
     AccountView,
     Address,
     ProgramResult,
     cpi::Signer,
     error::ProgramError,
 };
-use pinocchio_token::instructions::Transfer;
+use pinocchio::instruction::InstructionAccount;
+use pinocchio::instruction::InstructionView;
 
 // Replace with actual program ID
 const PROGRAM_ID: [u8; 32] = [2u8; 32];
@@ -18,7 +18,7 @@ entrypoint!(process_instruction);
 pub fn process_instruction(
     program_id: &Address,
     accounts: &[AccountView],
-     &[u8],
+    data: &[u8],
 ) -> ProgramResult {
     if program_id.as_ref() != &PROGRAM_ID {
         return Err(ProgramError::IncorrectProgramId);
@@ -59,24 +59,36 @@ fn execute_swap(accounts: &[AccountView], amount: u64) -> ProgramResult {
 
     // Derive vault PDA seeds for signing
     let bump = get_vault_bump(vault)?;
-    let seeds: &[&[u8]] = &[VAULT_SEED, &[bump]];
-    let signer_seeds = &[Signer::from(seeds)];
+    let bump_seed = [bump];
+    let signer_seeds = &[
+        pinocchio::cpi::Seed::from(VAULT_SEED),
+        pinocchio::cpi::Seed::from(&bump_seed),
+    ];
+    let signer = Signer::from(signer_seeds);
+
+    let mut ix_data = [0u8; 9];
+    ix_data[0] = 3;
+    ix_data[1..].copy_from_slice(&amount.to_le_bytes());
+    let ix_accounts = [
+        InstructionAccount::writable(vault_token_account.address()),
+        InstructionAccount::writable(user_token_account.address()),
+        InstructionAccount::readonly_signer(vault.address()),
+    ];
+    let ix = InstructionView {
+        program_id: swap_program.address(),
+        data: &ix_data,
+        accounts: &ix_accounts,
+    };
 
     // VULNERABILITY: CPI to UNVALIDATED program ID
     // Attacker supplies malicious program that receives vault authority
-    Transfer {
-        from: vault_token_account,
-        to: user_token_account,
-        authority: vault,
-        amount,
-    }
-    .invoke_signed(swap_program, signer_seeds)?; // Calls attacker-controlled program!
+    pinocchio::cpi::invoke_signed(&ix, &[vault_token_account, user_token_account, vault], &[signer])?; // Calls attacker-controlled program!
 
     Ok(())
 }
 
 fn get_vault_bump(vault: &AccountView) -> Result<u8, ProgramError> {
-    let data = vault.data();
+    let data = unsafe { vault.borrow_unchecked() };
     if data.len() < 9 {
         return Err(ProgramError::InvalidAccountData);
     }
