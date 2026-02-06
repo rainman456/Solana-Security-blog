@@ -1,5 +1,5 @@
 [package]
-name = "secure"
+name = "unsafe-account-closure-anchor-secure"
 version = "0.1.0"
 edition = "2021"
 

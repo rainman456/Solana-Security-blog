@@ -1,5 +1,5 @@
 [package]
-name = "missing-signer-pinocchio"
+name = "arithmetic-overflow-pinocchio-vulnerable"
 version = "0.1.0"
 edition = "2021"
 
