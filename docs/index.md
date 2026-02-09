@@ -11,14 +11,19 @@ title: Solana Security Cookbook
 
 ## Welcome! 👋
 
-Building on Solana? Security should be your top priority. This cookbook teaches you the **5 most critical vulnerabilities** in Solana smart contract development through:
+Building on Solana? Security should be your top priority. This cookbook teaches you **critical vulnerabilities** in Solana smart contract development through a **binary learning experience**:
+
+1. **The Exploit:** A program stripped of its defenses to show *how* it breaks.
+2. **The Shield:** The same logic hardened using **Anchor** constraints and **Pinocchio** manual validations.
+
+We provide:
 
 - 🎯 **Real code examples** - See vulnerable and secure versions side-by-side
 - 🧪 **Working exploits** - Run tests that demonstrate actual attacks
 - 📚 **Beginner-friendly explanations** - Understand complex concepts through everyday analogies
 - ⚡ **Two frameworks** - Learn both Anchor and Pinocchio approaches
 
-## The Big 5 Vulnerabilities
+## The Vulnerability Collection
 
 <div class="vulnerability-grid">
   {% for post in site.posts %}
@@ -64,14 +69,10 @@ These aren't theoretical vulnerabilities. They've caused:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/solana-security-cookbook.git
-cd solana-security-cookbook
+git clone https://github.com/rainman456/Solana-Security-blog .git
+cd examples
 
-# Install dependencies
-bun install
 
-# See a vulnerability in action
-bun test tests/01-missing-signer-check.test.ts
 ```
 
 **Output:**
