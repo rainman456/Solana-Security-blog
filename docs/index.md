@@ -9,19 +9,19 @@ title: Solana Security Cookbook
 
 ---
 
-## Welcome! 👋
+## Welcome
 
-Building on Solana? Security should be your top priority. This cookbook teaches you **critical vulnerabilities** in Solana smart contract development through a **binary learning experience**:
+Building on Solana? Security should be your top priority. This cookbook teaches critical vulnerabilities in Solana smart contract development through a binary learning experience:
 
-1. **The Exploit:** A program stripped of its defenses to show *how* it breaks.
-2. **The Shield:** The same logic hardened using **Anchor** constraints and **Pinocchio** manual validations.
+1. **The Exploit:** A program stripped of its defenses to show how it breaks.
+2. **The Shield:** The same logic hardened using Anchor constraints and Pinocchio manual validations.
 
-We provide:
+What you'll find here:
 
-- 🎯 **Real code examples** - See vulnerable and secure versions side-by-side
-- 🧪 **Working exploits** - Run tests that demonstrate actual attacks
-- 📚 **Beginner-friendly explanations** - Understand complex concepts through everyday analogies
-- ⚡ **Two frameworks** - Learn both Anchor and Pinocchio approaches
+- **Real code examples** - Vulnerable and secure versions side-by-side
+- **Working exploits** - Tests that demonstrate actual attacks
+- **Clear explanations** - Complex concepts explained through everyday analogies
+- **Two frameworks** - Both Anchor and Pinocchio implementations
 
 ## The Vulnerability Collection
 
@@ -35,17 +35,17 @@ We provide:
 
 ## Why This Cookbook?
 
-### 🎓 Learn by Doing
+### Learn by Doing
 
 Every vulnerability includes:
-- ✅ Vulnerable code you can compile
-- ✅ Secure version showing the fix
-- ✅ TypeScript tests demonstrating the exploit
-- ✅ Step-by-step explanations
+- Vulnerable code you can compile
+- Secure version showing the fix
+- TypeScript tests demonstrating the exploit
+- Step-by-step explanations
 
-### 🆚 Two Frameworks, One Goal
+### Two Frameworks, One Goal
 
-Compare **Anchor** (high-level, rapid development) with **Pinocchio** (zero-dependency, optimized):
+Compare Anchor (high-level, rapid development) with Pinocchio (zero-dependency, optimized):
 
 | Feature | Anchor | Pinocchio |
 |---------|--------|-----------|
@@ -54,65 +54,57 @@ Compare **Anchor** (high-level, rapid development) with **Pinocchio** (zero-depe
 | Compute Units | Higher | 20-50% lower |
 | Development | Faster | More control |
 
-### 📊 Real-World Impact
+### Real-World Impact
 
-These aren't theoretical vulnerabilities. They've caused:
-- 💰 **Millions in losses** across DeFi protocols
-- 🚨 **Critical exploits** in production programs
-- 😰 **Loss of user trust** in vulnerable projects
+These aren't theoretical vulnerabilities. They've caused millions in losses across DeFi protocols, critical exploits in production programs, and loss of user trust in vulnerable projects.
 
-**Learn to prevent them before they cost you.**
+Learn to prevent them before they cost you.
 
 ---
 
 ## Quick Start
 
+### 1. Clone the Repository
+
 ```bash
-# Clone the repository
 git clone https://github.com/rainman456/Solana-Security-blog.git
-cd examples
-
-
+cd Solana-Security-blog/cookbook-gem
 ```
 
-**Output:**
-```
-❌ Vulnerable: Bob can steal Alice's money
-  💰 Alice deposits: 10 SOL
-  💸 Bob attempts to withdraw: 5 SOL
-  ⚠️  Bob is NOT Alice!
-  ❌ ATTACK SUCCEEDED - Bob stole 5 SOL
+### 2. Explore the Structure
 
-✅ Secure: Bob's attack is blocked
-  🛡️  Secure program checks: Did Alice sign?
-  ✅ Alice didn't sign → Transaction rejected
-  ✅ ATTACK BLOCKED!
+Each vulnerability in `examples/` contains both Anchor and Pinocchio implementations:
+
 ```
+01-missing-signer-check/
+├── anchor/
+│   ├── vulnerable/    # Broken implementation
+│   └── secure/        # Fixed implementation
+├── pinocchio/
+│   ├── vulnerable/
+│   └── secure/
+└── tests/             # TypeScript exploit & verification tests
+```
+
+### 3. Run the Tests
+
+```bash
+cd examples/01-missing-signer-check/tests/anchor
+npm install
+npm test  # Runs both exploit and verification tests
+```
+
+The tests demonstrate the vulnerability in action and prove the fix works.
 
 ---
 
 ## Who Is This For?
 
-### 🌱 Beginners
-- New to Solana development
-- Want to understand security from day one
-- Prefer learning through examples and analogies
+**Beginners:** New to Solana development and want to understand security from day one. Start by reading the blog posts in order, running the tests, and comparing the code.
 
-**Start here:** Read the blog posts in order, run the tests, compare the code.
+**Experienced Developers:** Already building on Solana and want to audit your existing code or optimize with Pinocchio. Jump to the code examples, study the test suites, and apply the patterns.
 
-### 🚀 Experienced Developers
-- Already building on Solana
-- Want to audit your existing code
-- Need to optimize with Pinocchio
-
-**Start here:** Jump to the code examples, study the test suites, apply the patterns.
-
-### 🔍 Security Auditors
-- Reviewing Solana programs
-- Need reference implementations
-- Want comprehensive test coverage
-
-**Start here:** Explore the vulnerable versions, understand attack vectors, verify fixes.
+**Security Auditors:** Reviewing Solana programs and need reference implementations with comprehensive test coverage. Explore the vulnerable versions, understand attack vectors, and verify fixes.
 
 ---
 
@@ -128,29 +120,11 @@ cd examples
 
 ## What Makes This Different?
 
-### ✅ Beginner-Friendly Analogies
+**Beginner-Friendly Analogies:** Complex security concepts explained through everyday situations. Missing signer checks are like bank tellers not checking ID. PDA validation is like checking the hologram on an ID card. Arithmetic overflow is like an odometer rolling over.
 
-Complex security concepts explained through everyday situations:
-- Missing signer check = Bank teller not checking ID
-- PDA validation = Checking hologram on an ID card
-- Arithmetic overflow = Odometer rolling over
-- Reentrancy = Updating bank balance after handing over cash
-- Account closure = Canceling a credit card but not destroying it
+**Working Code, Not Theory:** Every example compiles and runs. You can build the vulnerable programs, build the secure programs, run tests that demonstrate exploits, and modify code to experiment.
 
-### ✅ Working Code, Not Theory
-
-Every example compiles and runs. You can:
-- Build the vulnerable programs
-- Build the secure programs
-- Run tests that demonstrate exploits
-- Modify code to experiment
-
-### ✅ Framework Comparison
-
-See the same vulnerability in both Anchor and Pinocchio:
-- Understand the tradeoffs
-- Choose the right tool for your project
-- Learn optimization techniques
+**Framework Comparison:** See the same vulnerability in both Anchor and Pinocchio. Understand the tradeoffs, choose the right tool for your project, and learn optimization techniques.
 
 ---
 
