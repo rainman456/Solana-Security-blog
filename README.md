@@ -81,8 +81,8 @@ Each example includes `exploit.ts` (demonstrates the vulnerability) and `verify.
 
 ```bash
 cd examples/01-missing-signer-check/tests/anchor
-npm install
-npm test  # Runs both exploit and verification tests
+npm install or bun install 
+npm test  or bun test # Runs both exploit and verification tests
 ```
 
 ### 3. Read the Deep Dive
