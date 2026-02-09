@@ -134,7 +134,7 @@ The tests demonstrate the vulnerability in action and prove the fix works.
 
 <div class="cta-buttons">
   <a href="{{ '/identity & access control/2025/01/27/missing-signer-check.html' | relative_url }}" class="btn btn-primary">Start Learning →</a>
-  <a href= https://github.com/rainman456/Solana-Security-blog" class="btn btn-secondary">View on GitHub</a>
+  <a href="https://github.com/rainman456/Solana-Security-blog" class="btn btn-secondary">View on GitHub</a>
 </div>
 
 ---
