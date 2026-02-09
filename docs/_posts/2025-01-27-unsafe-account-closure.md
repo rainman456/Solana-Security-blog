@@ -365,7 +365,7 @@ describe("Unsafe Account Closure Exploit", () => {
 - [FuzzingLabs on Revival Attacks](https://fuzzinglabs.com/revival-attacks-solana-programs)
 - [Solana Program Security: Closing Accounts](https://docs.solana.com/developing/programming-model/accounts#closing-accounts)
 - [Anchor Close Constraint Docs](https://www.anchor-lang.com/docs/account-constraints#close)
-- [Example Code: Unsafe Account Closure](https://github.com/your-repo/examples/05-unsafe-account-closure)
+- [Example Code: Unsafe Account Closure](https://github.com/rainman456/Solana-Security-blog/tree/main/examples/05-unsafe-account-closure)
 
 ## ✅ Security Checklist
 

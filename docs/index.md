@@ -68,7 +68,7 @@ Learn to prevent them before they cost you.
 
 ```bash
 git clone https://github.com/rainman456/Solana-Security-blog.git
-cd Solana-Security-blog/cookbook-gem
+cd Solana-Security-blog
 ```
 
 ### 2. Explore the Structure

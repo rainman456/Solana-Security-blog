@@ -324,7 +324,7 @@ fn test_overflow_protection() {
 - [Solana Security Best Practices](https://docs.solana.com/developing/programming-model/security)
 - [Neodyme Overflow Exploits](https://blog.neodyme.io/)
 - [Sec3 on Arithmetic Errors in Solana](https://www.sec3.dev/blog/understanding-arithmetic-overflow-underflows-in-rust-and-solana-smart-contracts)
-- [Example Code: Integer Overflow](https://github.com/your-repo/examples/01-integer-overflow)
+- [Example Code: Arithmetic Overflow](https://github.com/rainman456/Solana-Security-blog/tree/main/examples/03-arithmetic-overflow)
 
 ## ✅ Security Checklist
 

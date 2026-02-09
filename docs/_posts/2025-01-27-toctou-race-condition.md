@@ -679,7 +679,7 @@ describe("TOCTOU/Reentrancy Testing", () => {
 - [The DAO Hack Explained](https://www.gemini.com/cryptopedia/the-dao-hack-makerdao)
 - [Solana Reentrancy Patterns](https://blog.neodyme.io/posts/solana_reentrancy/)
 - [Checks-Effects-Interactions Pattern](https://docs.soliditylang.org/en/latest/security-considerations.html#use-the-checks-effects-interactions-pattern)
-- [Example Code: TOCTOU Race Condition](https://github.com/your-repo/examples/08-toctou-race-condition)
+- [Example Code: TOCTOU Race Condition](https://github.com/rainman456/Solana-Security-blog/tree/main/examples/08-toctou-race-condition)
 
 ## ✅ Security Checklist
 

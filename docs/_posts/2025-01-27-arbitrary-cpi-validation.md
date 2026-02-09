@@ -551,7 +551,7 @@ describe("Arbitrary CPI Validation Exploit", () => {
 - [Cashio Exploit Post-Mortem](https://blog.neodyme.io/posts/cashio_exploit/)
 - [Solana CPI Security Guide](https://docs.solana.com/developing/programming-model/calling-between-programs#program-security)
 - [Anchor Program Types](https://www.anchor-lang.com/docs/account-types)
-- [Example Code: Arbitrary CPI Validation](https://github.com/your-repo/examples/07-arbitrary-cpi-validation)
+- [Example Code: Arbitrary CPI Validation](https://github.com/rainman456/Solana-Security-blog/tree/main/examples/07-arbitrary-cpi-validation)
 
 ## ✅ Security Checklist
 

@@ -951,7 +951,7 @@ describe("Incorrect PDA Validation", () => {
 - [Solana PDA Documentation](https://docs.solana.com/developing/programming-model/calling-between-programs#program-derived-addresses)
 - [Anchor Seeds Constraints](https://www.anchor-lang.com/docs/account-constraints)
 - [Neodyme Security: PDA Validation](https://blog.neodyme.io/)
-- [Example Code: Incorrect PDA Validation](https://github.com/your-repo/examples/02-incorrect-pda-validation)
+- [Example Code: Incorrect PDA Validation](https://github.com/rainman456/Solana-Security-blog/tree/main/examples/02-incorrect-pda-validation)
 
 ## ✅ Security Checklist
 

@@ -486,7 +486,7 @@ describe("Missing Mint Validation Exploit", () => {
 - [Cashio Exploit Post-Mortem](https://blog.neodyme.io/posts/cashio_exploit/)
 - [SPL Token Security Guide](https://spl.solana.com/token)
 - [Anchor Account Constraints](https://www.anchor-lang.com/docs/account-constraints)
-- [Example Code: Missing Mint Validation](https://github.com/your-repo/examples/03-missing-mint-validation)
+- [Example Code: Missing Mint Validation](https://github.com/rainman456/Solana-Security-blog/tree/main/examples/06-missing-mint-validation)
 
 ## ✅ Security Checklist
 

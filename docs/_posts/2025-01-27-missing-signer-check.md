@@ -879,7 +879,7 @@ describe("Missing Signer Check Exploit", () => {
 - [Solana Security Best Practices - Signer Checks](https://docs.solana.com/developing/programming-model/security)
 - [Anchor Account Types](https://www.anchor-lang.com/docs/account-types)
 - [Pinocchio Account Validation](https://docs.rs/pinocchio/latest/pinocchio/)
-- [Example Code: Missing Signer Check](https://github.com/your-repo/examples/01-missing-signer-check)
+- [Example Code: Missing Signer Check](https://github.com/rainman456/Solana-Security-blog/tree/main/examples/01-missing-signer-check)
 
 ## ✅ Security Checklist
 

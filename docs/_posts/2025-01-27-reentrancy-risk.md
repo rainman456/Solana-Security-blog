@@ -415,7 +415,7 @@ describe("Cross-Program Reentrancy Exploit", () => {
 - [Solana Stack Exchange on Reentrancy](https://solana.stackexchange.com/questions/23581/why-reentrancy-is-generally-not-an-issue-in-solana)
 - [Helius Guide to Solana Security](https://www.helius.dev/blog/a-hitchhikers-guide-to-solana-program-security)
 - [Sec3 Blog on Solana Security](https://www.sec3.dev/blog/on-smart-contracts-why-solana-is-more-secure)
-- [Example Code: Cross-Program Reentrancy](https://github.com/your-repo/examples/06-cross-program-reentrancy)
+- [Example Code: Cross-Program Reentrancy](https://github.com/rainman456/Solana-Security-blog/tree/main/examples/04-reentrancy-risk)
 
 ## ✅ Security Checklist
 
