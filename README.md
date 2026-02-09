@@ -47,41 +47,71 @@ The repository is organized by vulnerability "modules." Each module is a self-co
 
 | Module | Vulnerability | Severity | Anchor Defense | Pinocchio Defense |
 | --- | --- | --- | --- | --- |
-| **01** | **Missing Signer** | 🔴 Critical | `Signer<'info>` | `account.is_signer()` |
-| **02** | **PDA Spoofing** | 🔴 Critical | `seeds / bump` | `find_program_address` |
-| **03** | **Overflows** | 🟡 High | `checked_add` | `checked_ops` |
-| **04** | **Re-entrancy** | 🔴 Critical | State-Locks | Account ordering |
-| **05** | **Zombie Accounts** | 🟡 High | `close = target` | Manual Lamport drain |
+| **01** | **Missing Signer Check** | 🔴 High | `Signer<'info>` | `account.is_signer()` |
+| **02** | **Incorrect PDA Validation** | 🔴 Critical | `seeds / bump` constraints | `find_program_address` |
+| **03** | **Arithmetic Overflow** | 🟡 High | `checked_add/sub/mul` | `checked_*` methods |
+| **04** | **Cross-Program Reentrancy** | 🔴 Critical | CEI Pattern | CEI Pattern + Guards |
+| **05** | **Unsafe Account Closure** | 🟡 High | `close = target` | Manual 3-step closure |
+| **06** | **Missing Mint Validation** | 🔴 High | Token constraints | Manual mint checks |
+| **07** | **Arbitrary CPI Validation** | 🔴 Critical | Program ID constraints | Manual program checks |
+| **08** | **TOCTOU Race Condition** | 🔴 Critical | Atomic state updates | Single-tx validation |
 
 ---
 
 ## 🚀 Quick Start for Auditors & Developers
 
-### 1. Browse the Code
+### 1. Explore the Structure
 
-Navigate to any folder in `/examples`. You will find a `vulnerable` and a `secure` directory. Read the `lib.rs` files side-by-side to see the diff.
-
-### 2. Run the Proof-of-Concept
-
-To see the exploit in action:
-
-```bash
-cd examples/01-missing-signer-check/anchor
-anchor test
+Each vulnerability in `/examples` contains both **Anchor** and **Pinocchio** implementations:
 
 ```
+01-missing-signer-check/
+├── anchor/
+│   ├── vulnerable/    # Broken implementation
+│   └── secure/        # Fixed implementation
+├── pinocchio/
+│   ├── vulnerable/
+│   └── secure/
+└── tests/             # TypeScript exploit & verification tests
+```
 
-*The test suite is designed to fail the "Exploit" test on the vulnerable program and pass all tests on the secure program.*
+### 2. Run the Tests
+
+Each example includes `exploit.ts` (demonstrates the vulnerability) and `verify.ts` (proves the fix):
+
+```bash
+cd examples/01-missing-signer-check/tests/anchor
+npm install
+npm test  # Runs both exploit and verification tests
+```
 
 ### 3. Read the Deep Dive
 
-Our [Live Blog](https://rainman456.github.io/Solana-Security-blog/) provides a technical breakdown of *why* these patterns matter and how to spot them during a peer review.
+Our [Live Blog](https://rainman456.github.io/Solana-Security-blog/) provides detailed technical breakdowns, real-world case studies, and mental models for each vulnerability.
 
 ---
 
+## 🎓 What's Covered
+
+This cookbook demonstrates **8 critical Solana security vulnerabilities** through working code examples:
+
+1.  **Missing Signer Check** - Authorization bypass through unverified signatures
+2.  **Incorrect PDA Validation** - Account spoofing via improper seed verification
+3.  **Arithmetic Overflow** - Integer wraparound exploits in financial calculations
+4.  **Cross-Program Reentrancy** - State manipulation through CPI callbacks
+5.  **Unsafe Account Closure** - Zombie account revival attacks
+6.  **Missing Mint Validation** - Token authenticity bypass
+7.  **Arbitrary CPI Validation** - Malicious program invocation
+8.  **TOCTOU Race Condition** - Time-of-check to time-of-use exploits
+
+Each vulnerability includes:
+-   **Vulnerable** and **Secure** implementations in both Anchor and Pinocchio
+-   **TypeScript tests** demonstrating exploits and verifying fixes
+-   **Detailed blog posts** with real-world case studies and mental models
+
 ## 🎓 Why This Matters
 
-Solana’s account model is powerful but unforgiving. Small mistakes in account ownership or signer verification lead to million-dollar exploits. This project serves as a **Pre-Audit Checklist** for developers to ensure their programs aren't just functional, but battle-hardened.
+Solana's account model is powerful but unforgiving. Small mistakes in account validation, signer verification, or state management can lead to critical exploits. This repository serves as a **security checklist** for developers and auditors to identify and prevent common vulnerabilities before deployment.
 
 ---
 

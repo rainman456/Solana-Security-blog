@@ -69,7 +69,7 @@ These aren't theoretical vulnerabilities. They've caused:
 
 ```bash
 # Clone the repository
-git clone https://github.com/rainman456/Solana-Security-blog .git
+git clone https://github.com/rainman456/Solana-Security-blog.git
 cd examples
 
 
@@ -160,7 +160,7 @@ See the same vulnerability in both Anchor and Pinocchio:
 
 <div class="cta-buttons">
   <a href="{{ '/identity & access control/2025/01/27/missing-signer-check.html' | relative_url }}" class="btn btn-primary">Start Learning →</a>
-  <a href="https://github.com/your-username/solana-security-cookbook" class="btn btn-secondary">View on GitHub</a>
+  <a href= https://github.com/rainman456/Solana-Security-blog" class="btn btn-secondary">View on GitHub</a>
 </div>
 
 ---
